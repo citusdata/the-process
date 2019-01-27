@@ -11,3 +11,7 @@ indent_style = spaces
 
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[*.mk]
+indent_size = 4
+indent_style = tabs

@@ -1,0 +1,32 @@
+-i https://pypi.python.org/simple
+# generated from Citus's Pipfile.lock (in src/test/regress) as of 1f4f6ea0
+# using `pipenv lock --requirements > requirements.txt`, so as to avoid the
+# need for pipenv/pyenv in this image
+asn1crypto==0.24.0
+blinker==1.4
+brotlipy==0.7.0
+certifi==2018.4.16
+cffi==1.11.5
+click==6.7
+construct==2.9.45
+cryptography==2.3
+h11==0.7.0
+h2==3.0.1
+hpack==3.0.0
+hyperframe==5.1.0
+idna==2.7
+kaitaistruct==0.8
+ldap3==2.5
+mitmproxy==4.0.4
+passlib==1.7.1
+pyasn1==0.4.4
+pycparser==2.18
+pyopenssl==18.0.0
+pyparsing==2.2.0
+pyperclip==1.6.4
+ruamel.yaml==0.15.47
+six==1.11.0
+sortedcontainers==2.0.4
+tornado==5.1
+urwid==2.0.1
+wsproto==0.11.0

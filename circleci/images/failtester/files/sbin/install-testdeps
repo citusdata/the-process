@@ -22,14 +22,13 @@ apt-get install -y --no-install-recommends \
   curl \
   debian-archive-keyring
 
-pkg_cloud_token='04c79f17bf82c6ee482ca210687bf542ecbd9dcbc0de671c'
-pkg_cloud_url="https://${pkg_cloud_token}:@packagecloud.io/install/repositories/citusdata/circlecipoc/script.deb.sh"
+pkg_cloud_url="https://packagecloud.io/install/repositories/citusdata/the-process/script.deb.sh"
 
 curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
 
-cat > /etc/apt/preferences.d/citusdata_circlecipoc.pref <<EOF
+cat > /etc/apt/preferences.d/citusdata_the-process.pref <<EOF
 Package: postgresql-server-dev-*
-Pin: release o=packagecloud.io/citusdata/circlecipoc
+Pin: release o=packagecloud.io/citusdata/the-process
 Pin-Priority: 700
 EOF
 

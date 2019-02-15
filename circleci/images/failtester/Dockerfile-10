@@ -1,10 +1,11 @@
-FROM python:3.6-slim
+# FROM python:3.6-slim
+FROM python@sha256:6411a78d12cd3bd1e594c3dd1532ed02e62da744bbc92863a7548ae2de9e7dfa
 
 # =========================================
 # = BEGIN COPY FROM PostgreSQL Dockerfile =
 # =========================================
 
-# see docker-library/postgres@45b855af/10/Dockerfile#L4-L168
+# see docker-library/postgres@cc305ee1/10/Dockerfile#L4-L168
 
 RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
@@ -33,7 +34,7 @@ RUN set -x \
 	&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
 	&& wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --batch --keyserver hkp://keys.gnupg.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+	&& gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
 	&& gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
 	&& { command -v gpgconf > /dev/null && gpgconf --kill all || :; } \
 	&& rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc \
@@ -69,14 +70,14 @@ RUN set -ex; \
 # uid                  PostgreSQL Debian Repository
 	key='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8'; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver hkp://keys.gnupg.net --recv-keys "$key"; \
+	gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key"; \
 	gpg --batch --export "$key" > /etc/apt/trusted.gpg.d/postgres.gpg; \
 	command -v gpgconf > /dev/null && gpgconf --kill all; \
 	rm -rf "$GNUPGHOME"; \
 	apt-key list
 
 ENV PG_MAJOR 10
-ENV PG_VERSION 10.6-1.pgdg90+1
+ENV PG_VERSION 10.7-1.pgdg90+1
 
 RUN set -ex; \
 	\

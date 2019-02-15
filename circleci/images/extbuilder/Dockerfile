@@ -1,5 +1,5 @@
 # buildpack-deps:stretch
-FROM buildpack-deps@sha256:f73faa32ec26ab3679b6eaca60df6b02367e04d6cec3a381342ea9345968f0de
+FROM buildpack-deps@sha256:19a482aad09128bd0c448373d933aa0f108dc8eb9be2317dca3797c646ce4b57
 
 COPY files /tmp
 

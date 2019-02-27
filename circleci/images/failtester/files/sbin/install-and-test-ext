@@ -6,10 +6,18 @@ IFS=$'\n\t'
 
 # this script needs root to install packages
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
    exit 1
 fi
 
 cd / && tar xfv "${CIRCLE_WORKING_DIRECTORY}/install-${PG_MAJOR}.tar"
 
-exec gosu circleci make -C "${CIRCLE_WORKING_DIRECTORY}/build-${PG_MAJOR}/src/test/regress" "${@}"
+status=0
+
+gosu circleci make -C "${CIRCLE_WORKING_DIRECTORY}/build-${PG_MAJOR}/src/test/regress" "${@}" || status=$?
+
+diffs="${CIRCLE_WORKING_DIRECTORY}/build-${PG_MAJOR}/src/test/regress/regression.diffs"
+
+if test -f "${diffs}"; then cat "${diffs}"; fi
+
+exit $status

@@ -17,10 +17,9 @@ project="${CIRCLE_PROJECT_REPONAME}"
 
 # we'll do everything with absolute paths
 basedir="$(pwd)"
-srcdir="${basedir}/src"
 
 # get the project and clear out the git repo (reduce workspace size
-rm -rf "${srcdir}/.git"
+rm -rf "${basedir}/.git"
 
 build_ext() {
   pg_major="$1"
@@ -31,7 +30,7 @@ build_ext() {
   # do everything in a subdirectory to avoid clutter in current directory
   mkdir -p "${builddir}" && cd "${builddir}"
 
-  "${srcdir}/configure" PG_CONFIG="/usr/lib/postgresql/${pg_major}/bin/pg_config" --enable-coverage
+  "${basedir}/configure" PG_CONFIG="/usr/lib/postgresql/${pg_major}/bin/pg_config" --enable-coverage
 
   installdir="${builddir}/install"
   make -j$(nproc) && mkdir -p "${installdir}" && make DESTDIR="${installdir}" install

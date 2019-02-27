@@ -20,7 +20,8 @@ apt-get install -y --no-install-recommends \
   apt-transport-https \
   ca-certificates \
   curl \
-  debian-archive-keyring
+  debian-archive-keyring \
+  gcc
 
 pkg_cloud_url="https://packagecloud.io/install/repositories/citusdata/the-process/script.deb.sh"
 

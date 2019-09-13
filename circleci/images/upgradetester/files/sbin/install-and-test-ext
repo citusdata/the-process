@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# make bash behave
+set -euxo pipefail
+IFS=$'\n\t'
+
+# this script needs root to install packages
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   exit 1
+fi
+
+cd / && tar xfv "${CIRCLE_WORKING_DIRECTORY}/install-10.tar"
+cd / && tar xfv "${CIRCLE_WORKING_DIRECTORY}/install-11.tar"
+
+# Take Makefile.global from already made build
+cp  ${CIRCLE_WORKING_DIRECTORY}/build-11/Makefile.global ${CIRCLE_WORKING_DIRECTORY}
+status=0
+
+gosu circleci make -C "${CIRCLE_WORKING_DIRECTORY}/src/test/regress" "${@}" old-bindir=/usr/lib/postgresql/10/bin new-bindir=/usr/lib/postgresql/11/bin || status=$?
+
+diffs="${CIRCLE_WORKING_DIRECTORY}/src/test/regress/regression.diffs"
+
+if test -f "${diffs}"; then cat "${diffs}"; fi
+
+exit $status

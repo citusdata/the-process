@@ -10,6 +10,9 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+OLD_PG_VERSION=10
+NEW_PG_VERSION=11
+
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729
 useradd -mg circleci --uid=1729 --shell=/bin/bash circleci
@@ -33,7 +36,7 @@ Pin-Priority: 700
 EOF
 
 echo "Installing tools for testing PostgreSQL extensions..." >&2
-apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 postgresql-10 postgresql-11 postgresql-server-dev-10 postgresql-server-dev-11
+apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 postgresql-$OLD_PG_VERSION postgresql-$NEW_PG_VERSION postgresql-server-dev-$OLD_PG_VERSION postgresql-server-dev-$NEW_PG_VERSION
 
 echo "Installing tools for failure testing..." >&2
 pip install -Ir /tmp/etc/requirements.txt

@@ -10,8 +10,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# supported PostgreSQL releases
-pg_majors=( 10 11 )
 citus_versions=( v8.0.0 v8.1.0 v8.2.0 v8.3.0 )
 
 # get codename from release file
@@ -24,20 +22,39 @@ echo "Adding circleci user..." >&2
 groupadd -r circleci --gid=1729
 useradd -mg circleci --uid=1729 --shell=/bin/bash circleci
 
+echo "Running apt-get update..." >&2
+apt-get update
+apt-get install -y --no-install-recommends \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  debian-archive-keyring \
+  gcc \
+  gosu
+
 # import key and keep apt-key from issuing warnings
 echo "Importing PGDG key..." >&2
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
 APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
+apt-get install -y python3-pip
+
+echo "Installing tools for failure testing..." >&2
+pip3 install -Ir /tmp/etc/requirements.txt
+
 # add pgdg repo to sources
 echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
 echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main" > \
-     /etc/apt/sources.list.d/pgdg.list
+    /etc/apt/sources.list.d/postgresql.list
+
 
 # build list of needed server dev packages
 echo "Installing server-dev packages..." >&2
-sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
-apt-get update && apt-get install -y --no-install-recommends "${sd_pkgs[@]}"
+apt-get update && apt-get install -y --no-install-recommends postgresql-server-dev-$PG_MAJOR
+
+# build list of postgres
+echo "Installing postgres packages..." >&2
+apt-get install -y --no-install-recommends postgresql-$PG_MAJOR
 
 # install old citus versions
 for citus_version in "${citus_versions[@]}"
@@ -69,11 +86,11 @@ build_ext() {
 }
 for citus_version in "${citus_versions[@]}"
 do 
-    for pg_major in "${pg_majors[@]}"
-    do
-    build_ext "${pg_major}" "${citus_version}"
-    done
+  build_ext "$PG_MAJOR" "${citus_version}"
 done
+
+chmod o+w -R /usr/
+
 # keep that image size small!
 echo "Cleaning up..." >&2
 rm -rf /var/lib/apt/lists/*

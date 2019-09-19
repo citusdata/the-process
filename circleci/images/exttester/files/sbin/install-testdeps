@@ -23,18 +23,9 @@ apt-get install -y --no-install-recommends \
   debian-archive-keyring \
   gcc
 
-pkg_cloud_url="https://packagecloud.io/install/repositories/citusdata/the-process/script.deb.sh"
-
-curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
-
-cat > /etc/apt/preferences.d/citusdata_the-process.pref <<EOF
-Package: postgresql-server-dev-*
-Pin: release o=packagecloud.io/citusdata/the-process
-Pin-Priority: 700
-EOF
-
 echo "Installing tools for testing PostgreSQL extensions..." >&2
-apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "postgresql-server-dev-${PG_MAJOR}"
+apt-get update && apt-get install -y --no-install-recommends make libedit-dev \
+ libpam0g-dev libselinux1-dev postgresql-common perl libcurl3 "postgresql-server-dev-${PG_MAJOR}"
 
 # keep that image size small!
 echo "Cleaning up..." >&2

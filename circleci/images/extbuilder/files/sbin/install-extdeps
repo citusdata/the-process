@@ -11,7 +11,9 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # supported PostgreSQL releases
-pg_majors=( 10 11 )
+pg_majors=( 10 11 12 )
+
+pg_latest=12 
 
 # get codename from release file
 . /etc/os-release
@@ -30,8 +32,9 @@ APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
 # add pgdg repo to sources
 echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
-echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main" > \
-     /etc/apt/sources.list.d/pgdg.list
+echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_latest}" > \
+    /etc/apt/sources.list.d/postgresql.list
+
 
 # build list of needed server dev packages
 echo "Installing server-dev packages..." >&2

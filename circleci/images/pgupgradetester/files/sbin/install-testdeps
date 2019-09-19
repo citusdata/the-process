@@ -10,8 +10,15 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-OLD_PG_VERSION=10
-NEW_PG_VERSION=11
+# get codename from release file
+. /etc/os-release
+codename=${VERSION#*(}
+codename=${codename%)*}
+
+# supported PostgreSQL releases
+pg_majors=( 10 11 12 )
+
+pg_latest=12
 
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729
@@ -23,23 +30,39 @@ apt-get install -y --no-install-recommends \
   apt-transport-https \
   ca-certificates \
   curl \
-  debian-archive-keyring
+  debian-archive-keyring \
+  gnupg \
+  gosu
 
-pkg_cloud_url="https://packagecloud.io/install/repositories/citusdata/the-process/script.deb.sh"
+# import key and keep apt-key from issuing warnings
+echo "Importing PGDG key..." >&2
+curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
+# add pgdg repo to sources
+echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
+echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_latest}" > \
+     /etc/apt/sources.list.d/pgdg.list
+
+pkg_cloud_url="https://packagecloud.io/install/repositories/citus-bot/the-process/script.deb.sh"
 curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
 
 cat > /etc/apt/preferences.d/citusdata_the-process.pref <<EOF
 Package: postgresql-server-dev-*
-Pin: release o=packagecloud.io/citusdata/the-process
+Pin: release o=packagecloud.io/citus-bot/the-process
 Pin-Priority: 700
 EOF
 
 echo "Installing tools for testing PostgreSQL extensions..." >&2
-apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 postgresql-$OLD_PG_VERSION postgresql-$NEW_PG_VERSION postgresql-server-dev-$OLD_PG_VERSION postgresql-server-dev-$NEW_PG_VERSION
+sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
+pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )
+apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
 
 echo "Installing tools for failure testing..." >&2
 pip install -Ir /tmp/etc/requirements.txt
+
+# make /var/run/postgresql accesible so that postgres user can create a lock file here
+chmod 2777 /var/run/postgresql
 
 # keep that image size small!
 echo "Cleaning up..." >&2

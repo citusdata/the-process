@@ -38,6 +38,7 @@ case $key in
 esac
 done
 
+# install citus artifacts for both postgres versions
 cd / && tar xfv "${CIRCLE_WORKING_DIRECTORY}/install-$OLD_PG_VERSION.tar"
 cd / && tar xfv "${CIRCLE_WORKING_DIRECTORY}/install-$NEW_PG_VERSION.tar"
 

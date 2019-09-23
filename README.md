@@ -41,3 +41,5 @@ docker login # enter your crendentials
 ```bash
 docker push {repositoryName}/{imageName}
 ```
+
+You can use `build.py` to build all the images and push them to docker hub. You must be logged in to docker hub with `docker login` before running the script.

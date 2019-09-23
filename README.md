@@ -5,7 +5,7 @@ This repository contains the source code for docker images that are used in [cit
 The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the core image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
 
 - Installs postgres 10 and 11 `pg_config`. We only need `pg_config` to generate citus artifacts.
-- Installs and tars the checked out citus version for the postgres versions. This is done so that the other jobs can install citus easily without the need to do `make install`.
+- Installs and tars the checked out citus version for the postgres versions. This is done so that the other jobs can install citus easily by untarring without the need to do `make install`.
 - Creates `build-{pg_version}` folders with citus configured, so these folders have the necessary `Makefile.global` to run the tests. These folders are generated for each postgres version. For example, at the time of writing there are 2 folders with `build-10` and `build-11`.
 
 The general process for other images are similar, which is:

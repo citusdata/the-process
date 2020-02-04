@@ -4,6 +4,7 @@ ARG TOOLS_VERSION=0.7.9
 RUN apk add --no-cache --virtual installdeps curl make sed && \
     apk add --no-cache \
         ca-certificates \
+        bash \
         git \
         gzip \
         openssh \

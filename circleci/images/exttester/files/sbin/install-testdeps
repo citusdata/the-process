@@ -29,7 +29,8 @@ apt-get install -y --no-install-recommends \
   curl \
   debian-archive-keyring \
   gcc \
-  gnupg
+  gnupg \
+  gosu
 
 # import key and keep apt-key from issuing warnings
 echo "Importing PGDG key..." >&2

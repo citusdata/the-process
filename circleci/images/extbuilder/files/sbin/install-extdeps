@@ -11,7 +11,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # supported PostgreSQL releases
-pg_majors=( 10 11 12 )
+pg_majors=( 11 12 )
 
 pg_latest=12 
 

@@ -87,23 +87,35 @@ And for all images follow the instructions on [how to publish a change](#4-How-t
 
 If you want to add support for a major postgres major, like `pg-13` you will need to do the steps that are not limited to:
 
-* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image. Make sure to add the package index for `pg-major` in `/etc/apt/sources.list.d/pgdg.list`. You can see find the related part [here](https://github.com/citusdata/the-process/blob/master/circleci/images/debbuilder/files/install-builddeps).
+* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image. Make sure to add the package index for `pg-major` in `/etc/apt/sources.list.d/pgdg.list`(See [this](https://apt.postgresql.org/pub/repos/apt/dists/)).You can see find the related part [here](https://github.com/citusdata/the-process/blob/master/circleci/images/debbuilder/files/install-builddeps). Basically replace the last one with the new postgres version such as `12` -> `13`.
+
+```bash
+cd debbuilder
+docker build --tag=citus/debbuilder13 . --build-arg PG_MAJORS=13
+```
+
 * The generated package will be in `{container-name}/home/circleci/debs`. One way of getting the package from the docker image is:
   * Run the container with `docker run -it {tag-name} bash`
   * Find the name of your container with `docker ps`
   * Copy the `debs` folder from docker container to your local `docker cp {container-name}:/home/circleci/debs .`
-* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. In order to upload you can:
+* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. Use `citus-bot` account there(learn the credentials from someone). In order to upload you can:
   * Upload the package file from the UI by clicking to `Upload image`
   * Or you can use the [package cloud cli](https://packagecloud.io/l/cli).
   
 * Add `pg-major` to `extbuilder` in its script so that citus artifacts are generated for that `pg_major` too.
-* Add new `pg-major` package index to `sources.list`:
+* Update `pg_latest`.
+* (This step should already be done if you update `pg_latest`). Add new `pg-major` package index to `sources.list`:
 
 ```bash
 # add pgdg repo to sources
 echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
 echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${PG-MAJOR}" > \
     /etc/apt/sources.list.d/postgresql.list
+```
+
+```bash
+cd extbuilder
+docker build --tag=citus/extbuilder-{pg-major} .
 ```
 
 * Build `exttester` with `pg-major`:

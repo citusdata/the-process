@@ -82,6 +82,8 @@ build_deb() {
     r /tmp/install-isolation.mk
     d
   }' src/test/isolation/Makefile
+  echo 'usr/lib/postgresql/*/lib/pgxs/src/test/isolation/*' >> \
+       "debian/postgresql-server-dev-${pg_major}.install"
   tweak+=("Add PostgreSQL's isolation tester to installed files")
 
   sed -i '/^Package: postgresql-server-dev-/,/^Breaks:$/ {/\(clang\|llvm\)/d}' debian/control

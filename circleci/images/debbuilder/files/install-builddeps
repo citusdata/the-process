@@ -23,17 +23,23 @@ echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
 cat > /etc/apt/sources.list.d/pgdg.list <<EOF
 deb     http://deb.debian.org/debian ${codename}-backports                main
 deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg         main
-deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg-testing 12
+deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg-testing 13
 EOF
 
 echo "Running apt-get update..." >&2
 apt-get update
 
+# this line is to bypass password prompts
+echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 echo "Installing tools for building Debian packages..." >&2
 apt-get install -y --no-install-recommends \
+  apt-utils \
   devscripts \
   fakeroot \
-  lintian
+  lintian \
+  slapd \
+  ldap-utils
+
 
 pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )
 apt-get build-dep -y "${pg_pkgs[@]}"

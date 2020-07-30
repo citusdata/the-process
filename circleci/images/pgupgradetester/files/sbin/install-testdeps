@@ -16,9 +16,9 @@ codename=${VERSION#*(}
 codename=${codename%)*}
 
 # supported PostgreSQL releases
-pg_majors=( 10 11 12 )
+pg_majors=( 11 12 13 )
 
-pg_latest=12
+pg_latest=13
 
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729
@@ -47,16 +47,11 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_la
 pkg_cloud_url="https://packagecloud.io/install/repositories/citus-bot/the-process/script.deb.sh"
 curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
 
-cat > /etc/apt/preferences.d/citusdata_the-process.pref <<EOF
-Package: postgresql-server-dev-*
-Pin: release o=packagecloud.io/citus-bot/the-process
-Pin-Priority: 700
-EOF
 
 echo "Installing tools for testing PostgreSQL extensions..." >&2
 sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
 pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )
-apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
+apt-get update && apt-get install -y make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
 
 echo "Installing tools for failure testing..." >&2
 pip install -Ir /tmp/etc/requirements.txt

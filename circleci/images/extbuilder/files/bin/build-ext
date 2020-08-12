@@ -5,7 +5,7 @@ set -euxo pipefail
 IFS=$'\n\t'
 
 # supported PostgreSQL releases
-pg_majors=( 11 12 )
+pg_majors=( 11 12 13)
 
 # get codename from release file
 . /etc/os-release

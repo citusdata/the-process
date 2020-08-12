@@ -15,7 +15,7 @@ fi
 codename=${VERSION#*(}
 codename=${codename%)*}
 
-pg_latest=12
+pg_latest=13
 
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729

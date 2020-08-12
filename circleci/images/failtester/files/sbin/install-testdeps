@@ -15,6 +15,8 @@ fi
 codename=${VERSION#*(}
 codename=${codename%)*}
 
+pg_latest=13
+
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729
 useradd -mg circleci --uid=1729 --shell=/bin/bash circleci
@@ -35,7 +37,7 @@ APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
 # add pgdg repo to sources
 echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
-echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main 12" > \
+echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_latest}" > \
      /etc/apt/sources.list.d/pgdg.list  
 
 pkg_cloud_url="https://packagecloud.io/install/repositories/citus-bot/the-process/script.deb.sh"

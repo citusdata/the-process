@@ -7,6 +7,8 @@ IFS=$'\n\t'
 codename=stretch
 pg_majors=( "${@}" )
 
+pg_latest=13
+
 # explicitly set user/group IDs
 groupadd -r circleci --gid=1729
 useradd -mg circleci --uid=1729 --shell=/bin/bash circleci
@@ -23,7 +25,7 @@ echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
 cat > /etc/apt/sources.list.d/pgdg.list <<EOF
 deb     http://deb.debian.org/debian ${codename}-backports                main
 deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg         main
-deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg-testing 13
+deb-src http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg-testing ${pg_latest}
 EOF
 
 echo "Running apt-get update..." >&2
@@ -36,9 +38,7 @@ apt-get install -y --no-install-recommends \
   apt-utils \
   devscripts \
   fakeroot \
-  lintian \
-  slapd \
-  ldap-utils
+  lintian 
 
 
 pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )

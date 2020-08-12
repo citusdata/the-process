@@ -87,7 +87,7 @@ And for all images follow the instructions on [how to publish a change](#4-How-t
 
 If you want to add support for a major postgres major, like `pg-13` you will need to do the steps that are not limited to:
 
-* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image. Make sure to add the package index for `pg-major` in `/etc/apt/sources.list.d/pgdg.list`(See [this](https://apt.postgresql.org/pub/repos/apt/dists/)).You can see find the related part [here](https://github.com/citusdata/the-process/blob/master/circleci/images/debbuilder/files/install-builddeps). Basically replace the last one with the new postgres version such as `12` -> `13`.
+* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image. Make sure to add the package index for `pg-major` in `/etc/apt/sources.list.d/pgdg.list`(See the [pgdg apt repository](https://apt.postgresql.org/pub/repos/apt/dists/)). You can update `pg_latest` variable in [install-builddebs](https://github.com/citusdata/the-process/blob/master/circleci/images/debbuilder/files/install-builddeps).
 
 ```bash
 cd debbuilder
@@ -98,7 +98,7 @@ docker build --tag=citus/debbuilder13 . --build-arg PG_MAJORS=13
   * Run the container with `docker run -it {tag-name} bash`
   * Find the name of your container with `docker ps`
   * Copy the `debs` folder from docker container to your local `docker cp {container-name}:/home/circleci/debs .`
-* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. Use `citus-bot` account there(learn the credentials from someone). In order to upload you can:
+* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. Use `citus-bot` account there(credentials are in the 1password vault). In order to upload you can:
   * Upload the package file from the UI by clicking to `Upload image`
   * Or you can use the [package cloud cli](https://packagecloud.io/l/cli).
   

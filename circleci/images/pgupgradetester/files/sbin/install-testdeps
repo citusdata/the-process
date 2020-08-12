@@ -51,7 +51,7 @@ curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
 echo "Installing tools for testing PostgreSQL extensions..." >&2
 sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
 pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )
-apt-get update && apt-get install -y make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
+apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
 
 echo "Installing tools for failure testing..." >&2
 pip install -Ir /tmp/etc/requirements.txt

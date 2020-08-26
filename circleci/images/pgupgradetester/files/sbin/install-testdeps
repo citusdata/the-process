@@ -53,6 +53,12 @@ sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
 pg_pkgs=( "${pg_majors[@]/#/postgresql-}" )
 apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "${sd_pkgs[@]}" "${pg_pkgs[@]}"
 
+# we need autoconf and build-essential for running the tests
+# we need other libraries for configure to pass, even though we could use
+# --without-libcurl while configuring, we prefer this for now.
+apt-get install -y autoconf build-essential libcurl4-openssl-dev \
+ libicu-dev libreadline-dev libselinux1-dev libxslt-dev libssl-dev 
+
 echo "Installing tools for failure testing..." >&2
 pip install -Ir /tmp/etc/requirements.txt
 

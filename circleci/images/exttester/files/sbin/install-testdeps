@@ -58,6 +58,12 @@ EOF
 echo "Installing tools for testing PostgreSQL extensions..." >&2
 apt-get update && apt-get install -y --no-install-recommends make postgresql-common perl libcurl3 "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}"
 
+# we need autoconf and build-essential for running the tests
+# we need other libraries for configure to pass, even though we could use
+# --without-libcurl while configuring, we prefer this for now.
+apt-get install -y autoconf build-essential libcurl4-openssl-dev \
+  libicu-dev libreadline-dev libselinux1-dev libxslt-dev libssl-dev 
+
 # Give permission for usr so that circleci can write citus artifacts
 chmod o+w -R /usr/
 

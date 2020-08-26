@@ -52,6 +52,12 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main" > \
 echo "Installing server-dev packages..." >&2
 apt-get update && apt-get install -y --no-install-recommends postgresql-server-dev-$PG_MAJOR
 
+# we need autoconf and build-essential for running the tests
+# we need other libraries for configure to pass, even though we could use
+# --without-libcurl while configuring, we prefer this for now.
+apt-get install -y autoconf build-essential libcurl4-openssl-dev libicu-dev \
+ libreadline-dev libselinux1-dev libxslt-dev libssl-dev 
+
 # build list of postgres
 echo "Installing postgres packages..." >&2
 apt-get install -y --no-install-recommends postgresql-$PG_MAJOR

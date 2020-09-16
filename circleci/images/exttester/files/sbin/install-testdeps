@@ -21,6 +21,9 @@ pg_latest=13
 groupadd -r circleci --gid=1729
 useradd -mg circleci --uid=1729 --shell=/bin/bash circleci
 
+# make sure that when running container interactively you can `su circleci` and have postgres on your path
+echo 'export "PATH=/usr/lib/postgresql/${PG_MAJOR}/bin/:${PATH}"' >> ~circleci/.bashrc 
+
 echo "Running apt-get update..." >&2
 apt-get update
 apt-get install -y --no-install-recommends \
@@ -70,6 +73,12 @@ chmod o+w -R /usr/
 # install gosu so that we can run tests from root with circleci user
 apt-get install -y gosu
 
+# some tests in some repos rely on da_DK locale being available
+cat <<EOF >> /etc/locale.gen
+da_DK.UTF-8 UTF-8
+da_DK ISO-8859-1
+EOF
+locale-gen
 
 # keep that image size small!
 echo "Cleaning up..." >&2

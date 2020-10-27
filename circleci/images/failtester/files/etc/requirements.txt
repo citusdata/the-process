@@ -9,7 +9,7 @@ certifi==2018.4.16
 cffi==1.11.5
 click==6.7
 construct==2.9.45
-cryptography==2.3
+cryptography==3.2
 h11==0.7.0
 h2==3.0.1
 hpack==3.0.0

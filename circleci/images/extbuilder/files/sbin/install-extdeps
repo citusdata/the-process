@@ -40,7 +40,7 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_la
 echo "Installing server-dev packages..." >&2
 sd_pkgs=( "${pg_majors[@]/#/postgresql-server-dev-}" )
 apt-get update && apt-get install -y --no-install-recommends "${sd_pkgs[@]}"
-apt-get install -y cmake
+apt-get install -y cmake liblz4-dev
 
 # keep that image size small!
 echo "Cleaning up..." >&2

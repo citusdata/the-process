@@ -40,16 +40,6 @@ echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
 echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${pg_latest}" > \
      /etc/apt/sources.list.d/pgdg.list  
 
-pkg_cloud_url="https://packagecloud.io/install/repositories/citus-bot/the-process/script.deb.sh"
-
-curl -sf "${pkg_cloud_url}" | unique_id=exttester bash
-
-cat > /etc/apt/preferences.d/citusdata_the-process.pref <<EOF
-Package: postgresql-server-dev-*
-Pin: release o=packagecloud.io/citus-bot/the-process
-Pin-Priority: 700
-EOF
-
 echo "Installing tools for testing PostgreSQL extensions..." >&2
 apt-get update && apt-get install -y --no-install-recommends make postgresql-common \
  perl libcurl3 "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}"

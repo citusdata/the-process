@@ -10,6 +10,9 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# read pg major version, error if not provided
+PG_MAJOR=${PG_MAJOR:?please provide the postgres major version}
+
 # taken from https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 POSITIONAL=()
 while [[ $# -gt 0 ]]

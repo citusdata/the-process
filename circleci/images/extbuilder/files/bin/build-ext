@@ -4,8 +4,8 @@
 set -euxo pipefail
 IFS=$'\n\t'
 
-# supported PostgreSQL releases
-pg_majors=( 11 12 13)
+# read pg major version, error if not provided
+PG_MAJOR=${PG_MAJOR:?please provide the postgres major version}
 
 # get codename from release file
 . /etc/os-release
@@ -41,7 +41,4 @@ build_ext() {
   cd "${builddir}" && rm -rf install files.lst && make clean
 }
 
-for pg_major in "${pg_majors[@]}"
-do
-  build_ext "${pg_major}"
-done
+build_ext "${PG_MAJOR}"

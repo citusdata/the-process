@@ -42,6 +42,38 @@ RUN ls /build/postgresql-${PG_VERSION}/build/
 RUN ls /build/postgresql-${PG_VERSION}/build/src/
 RUN ls /build/postgresql-${PG_VERSION}/build/src/test/
 
+FROM buildpack-deps:stretch AS dev-tools-collection
+
+WORKDIR /collect
+
+# TODO prepare all these copies in an intermediate layer
+ARG PG_VERSION
+ARG PG_MAJOR
+
+COPY --from=dev-tools-builder \
+	/build/postgresql-${PG_VERSION}/build/src/test/isolation/pg_isolation_regress \
+	/build/postgresql-${PG_VERSION}/build/src/test/isolation/isolationtester \
+	build/postgresql-${PG_MAJOR}/build/src/test/isolation/
+# COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/pg_regress /build/postgresql-${PG_MAJOR}/build/src/test/regress/pg_regress
+
+# copy regress files in multiple layers as we only need a few
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/data/ usr/lib/postgresql/13/lib/regress/data/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/expected/ usr/lib/postgresql/13/lib/regress/expected/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/input/ usr/lib/postgresql/13/lib/regress/input/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/output/ usr/lib/postgresql/13/lib/regress/output/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/sql/ usr/lib/postgresql/13/lib/regress/sql/
+
+COPY --from=dev-tools-builder \
+	/build/postgresql-${PG_VERSION}/src/test/regress/Makefile \
+	/build/postgresql-${PG_VERSION}/src/test/regress/parallel_schedule \
+	/build/postgresql-${PG_VERSION}/src/test/regress/resultmap \
+	/build/postgresql-${PG_VERSION}/src/test/regress/serial_schedule \
+	usr/lib/postgresql/13/lib/regress/
+
+COPY --from=dev-tools-builder \
+	/build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so \
+	usr/lib/postgresql/${PG_MAJOR}/lib/regress.so
+
 # TODO read the PG_MAJOR from PG_VERSION and install that actual version
 FROM buildpack-deps:stretch
 
@@ -80,16 +112,19 @@ RUN locale-gen
 # add postgres signing key
 RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
+ARG PG_VERSION
 ARG PG_MAJOR
 ENV PG_MAJOR=$PG_MAJOR
 
 # add postgres repository
-RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main ${PG_MAJOR}" > /etc/apt/sources.list.d/postgresql.list
+RUN echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list
 RUN apt-get update \
+# infer the pgdgversion of postgres based on the $PG_VERSION
+ && pgdg_version=$(apt list -a postgresql-server-dev-13 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}') \
  && apt-get install -y --no-install-recommends \
     postgresql-common \
-    postgresql-${PG_MAJOR} \
-    postgresql-server-dev-${PG_MAJOR} \
+    postgresql-${PG_MAJOR}=${pgdg_version} \
+    postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
@@ -99,27 +134,7 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
-# TODO prepare all these copies in an intermediate layer
-ARG PG_VERSION
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/isolation/pg_isolation_regress /build/postgresql-${PG_VERSION}/build/src/test/isolation/isolationtester /build/postgresql-${PG_MAJOR}/build/src/test/isolation/
-# COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/pg_regress /build/postgresql-${PG_MAJOR}/build/src/test/regress/pg_regress
-
-# copy regress files in multiple layers as we only need a few
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/data/ /usr/lib/postgresql/13/lib/regress/data/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/expected/ /usr/lib/postgresql/13/lib/regress/expected/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/input/ /usr/lib/postgresql/13/lib/regress/input/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/output/ /usr/lib/postgresql/13/lib/regress/output/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/sql/ /usr/lib/postgresql/13/lib/regress/sql/
-
-COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION}/src/test/regress/Makefile \
-	/build/postgresql-${PG_VERSION}/src/test/regress/parallel_schedule \
-	/build/postgresql-${PG_VERSION}/src/test/regress/resultmap \
-	/build/postgresql-${PG_VERSION}/src/test/regress/serial_schedule \
-	/usr/lib/postgresql/13/lib/regress/
-
-COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so \
-	/usr/lib/postgresql/${PG_MAJOR}/lib/regress.so
+# copy the collected files from the collection container at once into the final container
+COPY --from=dev-tools-collection /collect/ /
 
 WORKDIR /home/circleci

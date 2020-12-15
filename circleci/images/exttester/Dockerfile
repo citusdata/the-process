@@ -57,24 +57,23 @@ COPY --from=dev-tools-builder \
 # COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/pg_regress /build/postgresql-${PG_MAJOR}/build/src/test/regress/pg_regress
 
 # copy regress files in multiple layers as we only need a few
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/data/ usr/lib/postgresql/13/lib/regress/data/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/expected/ usr/lib/postgresql/13/lib/regress/expected/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/input/ usr/lib/postgresql/13/lib/regress/input/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/output/ usr/lib/postgresql/13/lib/regress/output/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/sql/ usr/lib/postgresql/13/lib/regress/sql/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/data/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/data/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/expected/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/expected/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/input/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/input/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/output/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/output/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/sql/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/sql/
 
 COPY --from=dev-tools-builder \
 	/build/postgresql-${PG_VERSION}/src/test/regress/Makefile \
 	/build/postgresql-${PG_VERSION}/src/test/regress/parallel_schedule \
 	/build/postgresql-${PG_VERSION}/src/test/regress/resultmap \
 	/build/postgresql-${PG_VERSION}/src/test/regress/serial_schedule \
-	usr/lib/postgresql/13/lib/regress/
+	usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 
 COPY --from=dev-tools-builder \
 	/build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so \
 	usr/lib/postgresql/${PG_MAJOR}/lib/regress.so
 
-# TODO read the PG_MAJOR from PG_VERSION and install that actual version
 FROM buildpack-deps:stretch
 
 RUN apt-get update \
@@ -120,7 +119,7 @@ ENV PG_MAJOR=$PG_MAJOR
 RUN echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list
 RUN apt-get update \
 # infer the pgdgversion of postgres based on the $PG_VERSION
- && pgdg_version=$(apt list -a postgresql-server-dev-13 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}') \
+ && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}') \
  && apt-get install -y --no-install-recommends \
     postgresql-common \
     postgresql-${PG_MAJOR}=${pgdg_version} \

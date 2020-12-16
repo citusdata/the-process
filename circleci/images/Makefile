@@ -2,10 +2,20 @@
 DOCKER_REPO=citus
 
 # auto generated variables
-TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')# todo, add unique thing, empty for release version
+ifeq ($(RELEASE),)
+	TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')
+else
+	TAG_SUFFIX :=
+endif
+
+# all postgres versions we test agains
+PG_VERSIONS = 11.10 12.5 13.1
+
+# citus version 8.x only supports 11, when bumping versions below we can create more images
+CITUS_UPGRADE_PG_VERSIONS = 11.10
+CITUS_UPGRADE_VERSIONS = v8.0.0 v8.1.0 v8.2.0 v8.3.0
 
 # code below creates targets for all postgres verions in PG_VERSIONS
-PG_VERSIONS = 11.10 12.5 13.1
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
@@ -71,6 +81,31 @@ endef
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
 $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'))))
 
+define make-citus-upgrage-targets
+# $1 = PG_VERSION
+# $2 = PG_MAJOR
+
+build-citusupgradetester-$1:
+	docker build \
+		citusupgradetester/ \
+		-f citusupgradetester/Dockerfile \
+		--build-arg=PG_VERSION=$1 \
+		--build-arg=PG_MAJOR=$2 \
+		--build-arg=CITUS_VERSIONS="${CITUS_UPGRADE_VERSIONS}"\
+		--tag=${DOCKER_REPO}/citusupgradetester:$1${TAG_SUFFIX}
+
+build-all:: build-citusupgradetester-$1
+build-citusupgradetester-all:: build-citusupgradetester-$1
+
+push-citusupgradetester-$1: build-citusupgradetester-$1
+	docker push ${DOCKER_REPO}/citusupgradetester:$1${TAG_SUFFIX}
+
+push-all:: push-citusupgradetester-$1
+push-citusupgradetester-all:: push-citusupgradetester-$1
+endef
+$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'))))
+
+
 # upgrade image is 1 global image
 build-pgupgradetester:
 	docker build \
@@ -85,3 +120,4 @@ push-pgupgradetester: build-pgupgradetester
 	docker push ${DOCKER_REPO}/pgupgradetester:latest${TAG_SUFFIX}
 
 push-all:: push-pgupgradetester
+

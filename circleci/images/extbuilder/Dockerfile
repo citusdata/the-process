@@ -48,7 +48,5 @@ RUN echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-arch
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
-COPY files/bin/ /usr/local/bin/
-
 USER circleci
 WORKDIR /home/circleci

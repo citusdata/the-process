@@ -31,9 +31,6 @@ RUN apt-get update \
 COPY locale.gen /etc/locale.gen
 RUN locale-gen
 
-COPY ./files/etc/requirements.txt /tmp/etc/
-RUN pip3 install -Ir /tmp/etc/requirements.txt
-
 # add postgres signing key
 RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 
@@ -59,5 +56,8 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
+
+COPY ./files/etc/requirements.txt /tmp/etc/
+RUN pip3 install -Ir /tmp/etc/requirements.txt
 
 WORKDIR /home/circleci

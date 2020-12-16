@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# make bash behave
+set -euxo pipefail
+
+# this script needs root to install packages
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   exit 1
+fi
+
+# read pg major version, error if not provided
+PG_MAJOR=${PG_MAJOR:?please provide the postgres major version}
+
+CITUS_VERSIONS=${CITUS_VERSIONS:?please provide CITUS_VERSIONS to package in upgrade container }
+
+# install old citus versions
+for citus_version in ${CITUS_VERSIONS}
+do
+  git clone --branch $citus_version https://github.com/citusdata/citus.git --depth 1 /citus_$citus_version
+done
+
+basedir="$(pwd)"
+
+build_ext() {
+  pg_major="$1"
+  citus_version="$2"
+  citus_dir=/citus_$citus_version
+
+  builddir="${basedir}/build-${pg_major}"
+
+  # do everything in a subdirectory to avoid clutter in current directory
+  mkdir -p "${builddir}" && cd "${builddir}"
+
+  CFLAGS=-Werror "${citus_dir}/configure" PG_CONFIG="/usr/lib/postgresql/${pg_major}/bin/pg_config" --enable-coverage
+
+  installdir="${builddir}/install"
+  make -sj$(nproc) && mkdir -p "${installdir}" && make DESTDIR="${installdir}" install
+
+  cd "${installdir}" && find . -type f -print > "${builddir}/files.lst"
+  tar cvf "${basedir}/install-pg${pg_major}-citus${citus_version}.tar" `cat ${builddir}/files.lst`
+
+  cd "${builddir}" && rm -rf install files.lst && make clean
+}
+for citus_version in ${CITUS_VERSIONS}
+do 
+  build_ext "$PG_MAJOR" "${citus_version}"
+done
+
+chmod o+w -R /usr/
+
+# keep that image size small!
+echo "Cleaning up..." >&2
+rm -rf /var/lib/apt/lists/*

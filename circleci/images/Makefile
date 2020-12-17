@@ -2,20 +2,20 @@
 DOCKER_REPO ?= citus
 
 # auto generated variables
-ifeq ($(RELEASE),)
-	TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')
-else
+ifdef RELEASE
 	TAG_SUFFIX :=
+else
+	TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')
 endif
 
-# all postgres versions we test agains
+# all postgres versions we test against
 PG_VERSIONS = 11.10 12.5 13.1
 
 # citus version 8.x only supports 11, when bumping versions below we can create more images
 CITUS_UPGRADE_PG_VERSIONS = 11.10
 CITUS_UPGRADE_VERSIONS = v8.0.0 v8.1.0 v8.2.0 v8.3.0
 
-# code below creates targets for all postgres verions in PG_VERSIONS
+# code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
@@ -106,7 +106,7 @@ endef
 $(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'))))
 
 
-# upgrade image is 1 global image
+# pg upgrade image is 1 global image
 build-pgupgradetester:
 	docker build \
 		pgupgradetester/ \

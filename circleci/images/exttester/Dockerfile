@@ -38,10 +38,6 @@ WORKDIR /build/postgresql-${PG_VERSION}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
 RUN make -sj8
 
-RUN ls /build/postgresql-${PG_VERSION}/build/
-RUN ls /build/postgresql-${PG_VERSION}/build/src/
-RUN ls /build/postgresql-${PG_VERSION}/build/src/test/
-
 FROM buildpack-deps:stretch AS dev-tools-collection
 
 WORKDIR /collect
@@ -54,25 +50,12 @@ COPY --from=dev-tools-builder \
 	/build/postgresql-${PG_VERSION}/build/src/test/isolation/pg_isolation_regress \
 	/build/postgresql-${PG_VERSION}/build/src/test/isolation/isolationtester \
 	build/postgresql-${PG_MAJOR}/build/src/test/isolation/
-# COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/pg_regress /build/postgresql-${PG_MAJOR}/build/src/test/regress/pg_regress
 
 # copy regress files in multiple layers as we only need a few
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/data/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/data/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/expected/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/expected/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/input/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/input/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/output/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/output/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/sql/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/sql/
-
-COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION}/src/test/regress/Makefile \
-	/build/postgresql-${PG_VERSION}/src/test/regress/parallel_schedule \
-	/build/postgresql-${PG_VERSION}/src/test/regress/resultmap \
-	/build/postgresql-${PG_VERSION}/src/test/regress/serial_schedule \
-	usr/lib/postgresql/${PG_MAJOR}/lib/regress/
-
-COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so \
-	usr/lib/postgresql/${PG_MAJOR}/lib/regress.so
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so usr/lib/postgresql/${PG_MAJOR}/lib/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
+RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
+RUN ls -al usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 
 FROM buildpack-deps:stretch
 

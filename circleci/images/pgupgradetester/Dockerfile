@@ -38,13 +38,13 @@ ENV PG_VERSIONS=$PG_VERSIONS
 # The reason for this convoluted way of installing postgres is
 # because docker uses /bin/sh to execute the RUN commands where
 # the below code requires /bin/bash.
-RUN /bin/bash -c '\
-    echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list \
+SHELL ["/bin/bash", "-c"]
+RUN echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
  && pkgs=(); \
     for PG_VERSION in $PG_VERSIONS; do \
-        PG_MAJOR=$(echo ${PG_VERSION} | awk -F'"'"'[^0-9]*'"'"' '"'"'/[0-9]/ { print $1 }'"'"'); \
-        pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '"'"'{print $2}'"'"'); \
+        PG_MAJOR=$(echo ${PG_VERSION} | awk -F'[^0-9]*' '/[0-9]/ { print $1 }'); \
+        pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}'); \
         pkgs+=("postgresql-client-${PG_MAJOR}=${pgdg_version}"); \
         pkgs+=("postgresql-${PG_MAJOR}=${pgdg_version}"); \
         pkgs+=("postgresql-server-dev-${PG_MAJOR}=${pgdg_version}"); \
@@ -53,8 +53,7 @@ RUN /bin/bash -c '\
  && apt-get install -y --no-install-recommends \
     postgresql-common \
     ${pkgs[@]} \
- && rm -rf /var/lib/apt/lists/* \
-    '
+ && rm -rf /var/lib/apt/lists/*
 
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql

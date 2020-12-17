@@ -1,156 +1,65 @@
 # Table of Contents
 
 * [Introduction](#Introduction)
-* [1. Images](#1-images)
-  * [1.1 How circleci uses our images in testing](#11-How-circleci-uses-our-images-in-testing)
-* [2. How to update images](#2-How-to-update-images)
-  * [2.1 How to update a postgres minor version in images](#2.1-How-to-update-postgres-minor-version-in-images)
-  * [2.2 How to add a major postgres major](#2.2-How-to-add-a-major-postgres-major)
-* [3. How to publish a change](#3-How-to-publish-a-change)
+* [1. Makefile](#1-makefile)
+* [2. Images](#2-images)
+  * [extbuilder](#extbuilder)
+  * [exttester](#exttester)
+  * [failtester](#failtester)
+  * [pgupgradetester](#pgupgradetester)
+  * [citusupgradetester](#citusupgradetester)
+  * [stylechecker](#stylechecker)
 
 ## Introduction
 
 This repository contains the source code for docker images that are used in [citus testing](https://github.com/citusdata/citus/blob/master/.circleci/config.yml). The images are pushed to [docker hub](https://hub.docker.com/u/citus). There is no hooking logic between this repository and the docker hub account. It is used purely for the storage of our images source code.
 
-## 1. Images
+## 1. Makefile
 
-The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the core image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
+The creation of the images is driven by the [Makefile](circleci/images/Makefile). The Makefile has the list of pinned versions of postgres we build against. For images specific to the postgres version there will be targets to build and push the image for a specific postgres version, or all pinned versions at once. Secondly all images can be build with the `build-all` target and pushed with `push-all`.
 
-While building the image:
+During development and maintenance of the images you can freely call `make` with the desired targets. The images will be tagged with a `-devYYYYmmddHHMM` suffix to indicate these are development images. Since the minute is included in the tag, most often this will create new tags for every run. A new tag doesn't mean new images. The normal docker caching system is active. When a layer does not change it will be reused in a new tagged artifact.
 
-* Installs postgres majors' `pg_config`. We only need `pg_config` to generate citus artifacts.
+When ready to release run `make` with the `REALESE` veriable set to `1`.
 
-While running the container:
+    $ RELEASE=1 make push-all
 
-* Installs and tars the checked out citus version for the postgres versions. This is done so that the other jobs can install citus easily by untarring without the need to do `make install`. We need to do this step in the running container, not while building the image, so that the built citus version is the checked out citus code.
-* Creates `build-{pg_version}` folders with citus configured, so these folders have the necessary `Makefile.global` to run the tests. These folders are generated for each postgres version. For example, at the time of writing there are 3 folders with `build-10`, `build-11` and `build-12`.
+This will push all images, building all layers that might have changed since the last run of build. Make sure you have tested the images before pushing a release. CI might start using the newly pushed images directly, depending on the availability of a cache and how it is invalidated.
 
-The general process for other images are similar, which is:
+Before being able to push to the docker registry you need to have your cli authenticated to the docker hub and have sufficient privilidges to push to the registery.
 
-While building the image:
+If you don't have access, or want to push the images to a private repo, the repo can be changed at runtime with the `DOCKER_REPO` variable like:
 
-* Install postgres major which is taken as an argument `PG_MAJOR`.
+    $ DOCKER_REPO=private-repo make push-all
 
-While running the container:
+## 2. Images
 
-* Untar the citus tar to install citus for the postgres version that the image will use. For example, if postgres 11 is used, the tar is named `install-11.tar`.
-* The script (`install-and-test-ext`) takes the target name as an argument, and the following command is used to run the test:
+Details on the images. Mostly uninteresting for users. Please refer to the [Makefile](#1-makefile) section above.
 
-```bash
-gosu circleci make -C "${CIRCLE_WORKING_DIRECTORY}/build-${PG_MAJOR}/src/test/regress" "${@}"
-```
+### extbuilder
 
-* Finally `regression.diffs` is printed if it exists, which indicates that there was a problem during the tests.
+The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
 
-Because of the specific logic that we have to run tests faster, we have a docker image `debbuilder` that generates a debian package for `postgresql-server-dev-{pg-major}`. The generated package is in the built docker image, specifically in `{container-name}/home/circleci/debs`. The package is pushed to [the-process](https://packagecloud.io/citus-bot/the-process). This package place is added to apt source list and pinned with with the highest priority so that it is chosen over the standard `postgresql-server-dev-{pg-major}` package.
+This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is build for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
 
-The installation of postgres packages is at the time of building the image to reduce testing time. However this means that once the image is built the postgres version is fixed. You will need to rebuild the image if you want to upgrade the image, upgrading the image for a minor version is easier compared to upgrading a major version.
+The postgres version is installed from the pgdg apt archive. This allows us to install older versions, and therefor keep the versions of postgres pinned during normal release cycles. To bump the version of the Postgres to build against one should change the version as pinned in the `Makefile`
 
-### 1.1. How circleci uses our images in testing
+### exttester
 
-Our [dockerhub account](https://hub.docker.com/u/citus) has all the images here except the `debbuilder`. When a change is committed, circleci:
+Very comparable to the `extbuilder` (todo: merge the images together - yes they are that similar). This image however is slightly optimized for actually running the tests of citus against 1 postgres verstion.
 
-* Pulls the `https://hub.docker.com/r/citus/extbuilder` image, generates the citus artifacts which other images will use for testing.
-* All of our test jobs wait for `extbuilder` to be completed. Once that is done, all of the jobs are run in parallel without any specific order(It is possible that some jobs are waiting because of parallelism limit in our circleci).
-* All the test jobs use the artifacts that are generated with `extbuilder`.
+### failtester
 
-Refer to [images](#1-images) for more details.
+This image is functionally a specialization of the [exttester](#exttester) image. It has extra tools for running the failure tests of Citus. Due to how the image is structured there is very little in common. This image starts from a python based and add the postgres versions on top. Finally it includes all the python libraries
 
-## 2. How to update images
+### pgupgradetester
 
-While updating images, if the image uses python such as `failtester`, you will need to update the `requirements.txt` as well. We are using `pipenv` for development in [citus](https://github.com/citusdata/citus) but we generate `requirements.txt` file with `pipenv` to install our python dependencies. Running something like the following should generate `requirements.txt`:
+This image is also a specialization of the [exttester](#exttester) on a functional level, and has many overlaps with [failtester](#failtester), so much so that I also feel we can merge these together at some point in the future.
 
-```bash
- pipenv lock --requirements > requirements.txt
-```
+### citusupgradetester
 
-Make sure that you include the commit id of citus at the beginning of the generated `requirements.txt`. If you are adding a new python dependency you will need to repeat this process for images to be updated and have the correct dependencies.
+This container is a special beast. Besides having the testing dependencies installed like [pgupgradetester](#pgupgradetester) and [failtester](#failtester), it also contains the binaries of older citus versions. During the testrun they can actually be installed at will by the testing harness to simulate a citus upgrade.
 
-### 2.1 How to update postgres minor version in images
+### stylechecker
 
-To update a postgres minor version, you will need to generate a `debian` package:
-
-* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image.
-* The generated package will be in `{container-name}/home/circleci/debs`. One way of getting the package from the docker image is:
-  * Run the container with `docker run -it {tag-name} bash`
-  * Find the name of your container with `docker ps`
-  * Copy the `debs` folder from docker container to your local `docker cp {container-name}:/home/circleci/debs .`
-* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. In order to upload you can:
-  * Upload the package file from the UI by clicking to `Upload image`
-  * Or you can use the [package cloud cli](https://packagecloud.io/l/cli).
-
-After adding the package to `package cloud`:
-
-And for all images follow the instructions on [how to publish a change](#4-How-to-publish-a-change)
-
-### 2.2. How to add a postgres major
-
-If you want to add support for a major postgres major, like `pg-13` you will need to do the steps that are not limited to:
-
-* Generate `postgresql-server-dev-{pg-major}` package with `debbuilder` image. Make sure to add the package index for `pg-major` in `/etc/apt/sources.list.d/pgdg.list`(See the [pgdg apt repository](https://apt.postgresql.org/pub/repos/apt/dists/)). You can update `pg_latest` variable in [install-builddebs](https://github.com/citusdata/the-process/blob/master/circleci/images/debbuilder/files/install-builddeps).
-
-```bash
-cd debbuilder
-docker build --tag=citus/debbuilder13 . --build-arg PG_MAJORS=13
-```
-
-* The generated package will be in `{container-name}/home/circleci/debs`. One way of getting the package from the docker image is:
-  * Run the container with `docker run -it {tag-name} bash`
-  * Find the name of your container with `docker ps`
-  * Copy the `debs` folder from docker container to your local `docker cp {container-name}:/home/circleci/debs .`
-* Upload the package to [the-process](https://packagecloud.io/citus-bot/the-process). Make sure that you choose `debian stretch` while uploading. Use `citus-bot` account there(credentials are in the 1password vault). In order to upload you can:
-  * Upload the package file from the UI by clicking to `Upload image`
-  * Or you can use the [package cloud cli](https://packagecloud.io/l/cli).
-  
-* Add `pg-major` to `extbuilder` in its script so that citus artifacts are generated for that `pg_major` too.
-* Update `pg_latest`.
-* (This step should already be done if you update `pg_latest`). Add new `pg-major` package index to `sources.list`:
-
-```bash
-# add pgdg repo to sources
-echo "Writing /etc/apt/sources.list.d/pgdg.list..." >&2
-echo "deb http://apt.postgresql.org/pub/repos/apt/ ${codename}-pgdg main ${PG-MAJOR}" > \
-    /etc/apt/sources.list.d/postgresql.list
-```
-
-```bash
-cd extbuilder
-docker build --tag=citus/extbuilder-{pg-major} .
-```
-
-* Build `exttester` with `pg-major`:
-
-```bash
-cd exttester
-docker build --tag=citus/exttester-{pg-major} . --build-arg PG_MAJOR={pg-major}
-```
-
-* Build `failtester` with `pg-major`:
-
-```bash
-cd failtester
-docker build --tag=citus/failtester-{pg-major} . --build-arg PG_MAJOR={pg-major}
-```
-
-## 3. How to publish a change
-
-If you want to make a change and push it to docker hub, you should do:
-
-* Clone the repository and make the necessary changes
-* Build the image
-
-```bash
-docker build --tag={repositoryName}/{imageName} .
-```
-
-* Login to your account
-
-```bash
-docker login # enter your crendentials
-```
-
-* Push the image
-
-```bash
-docker push {repositoryName}/{imageName}
-```
+TODO: this image has not changed and is currently not build by the Makefile. Future work.

@@ -1,5 +1,5 @@
 # config variable
-DOCKER_REPO=citus
+DOCKER_REPO ?= citus
 
 # auto generated variables
 ifeq ($(RELEASE),)

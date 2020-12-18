@@ -26,7 +26,7 @@ When ready to release run `make` with the `REALESE` veriable set to `1`.
 
 This will push all images, building all layers that might have changed since the last run of build. Make sure you have tested the images before pushing a release. CI might start using the newly pushed images directly, depending on the availability of a cache and how it is invalidated.
 
-Before being able to push to the docker registry you need to have your cli authenticated to the docker hub and have sufficient privilidges to push to the registery.
+Before being able to push to the docker registry you need to have your cli authenticated to the docker hub and have sufficient privileges to push to the registery.
 
 If you don't have access, or want to push the images to a private repo, the repo can be changed at runtime with the `DOCKER_REPO` variable like:
 
@@ -42,11 +42,11 @@ The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/i
 
 This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is build for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
 
-The postgres version is installed from the pgdg apt archive. This allows us to install older versions, and therefor keep the versions of postgres pinned during normal release cycles. To bump the version of the Postgres to build against one should change the version as pinned in the `Makefile`
+The postgres version is installed from the pgdg apt archive. This allows us to install older versions, and therefore keep the versions of postgres pinned during normal release cycles. To bump the version of the Postgres to build against one should change the version as pinned in the `Makefile`
 
 ### exttester
 
-Very comparable to the `extbuilder` (todo: merge the images together - yes they are that similar). This image however is slightly optimized for actually running the tests of citus against 1 postgres verstion.
+Very comparable to the `extbuilder` (todo: merge the images together - yes they are that similar). This image however is slightly optimized for actually running the tests of citus against 1 postgres version.
 
 ### failtester
 

@@ -9,10 +9,10 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS = 11.10 12.5 13.1
+PG_VERSIONS = 11.9 12.4 13.0
 
 # citus version 8.x only supports 11, when bumping versions below we can create more images
-CITUS_UPGRADE_PG_VERSIONS = 11.10
+CITUS_UPGRADE_PG_VERSIONS = 11.9
 CITUS_UPGRADE_VERSIONS = v8.0.0 v8.1.0 v8.2.0 v8.3.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS

@@ -55,6 +55,11 @@ COPY --from=dev-tools-builder \
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so usr/lib/postgresql/${PG_MAJOR}/lib/
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
+
+# removes the unstable timezone tests from the schedule. can be undone after upgrading postgres to a version the has
+# https://github.com/postgres/postgres/commit/4a071afbd056282746a5bc9362e87f579a56402d#diff-1a70d17f02ca924110ee662b1e8ccbccf0819f8fb22223068dd3d75bd6e6bc19
+RUN < usr/lib/postgresql/${PG_MAJOR}/lib/regress/parallel_schedule sed 's/timetz //g' > usr/lib/postgresql/${PG_MAJOR}/lib/regress/parallel_schedule
+
 RUN ls -al usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 
 FROM buildpack-deps:stretch

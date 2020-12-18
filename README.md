@@ -40,7 +40,7 @@ Details on the images. Mostly uninteresting for users. Please refer to the [Make
 
 The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
 
-This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is build for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
+This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is built for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
 
 The postgres version is installed from the pgdg apt archive. This allows us to install older versions, and therefore keep the versions of postgres pinned during normal release cycles. To bump the version of the Postgres to build against one should change the version as pinned in the `Makefile`
 
@@ -62,4 +62,4 @@ This container is a special beast. Besides having the testing dependencies insta
 
 ### stylechecker
 
-TODO: this image has not changed and is currently not build by the Makefile. Future work.
+TODO: this image has not changed and is currently not built by the Makefile. Future work.

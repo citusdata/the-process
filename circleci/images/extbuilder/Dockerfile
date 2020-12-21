@@ -7,24 +7,28 @@ RUN apt-get update \
 # install dependencies
  && apt-get install -y --no-install-recommends \
     apt-transport-https \
+    autoconf \
+    build-essential \
     ca-certificates \
     curl \
     debian-archive-keyring \
     gcc \
     gnupg \
     gosu \
-    make \
-    perl \
-    autoconf \
-    build-essential \
     libcurl3 \
     libcurl4-openssl-dev \
     libicu-dev \
+    liblz4-1 \
+    liblz4-dev \
     libreadline-dev \
     libselinux1-dev \
-    libxslt-dev \
     libssl-dev \
+    libxslt-dev \
+    libzstd-dev \
+    libzstd1 \
     locales \
+    make \
+    perl \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 

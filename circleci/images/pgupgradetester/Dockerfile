@@ -17,10 +17,14 @@ RUN apt-get update \
     libcurl3 \
     libcurl4-openssl-dev \
     libicu-dev \
+    liblz4-1 \
+    liblz4-dev \
     libreadline-dev \
     libselinux1-dev \
     libssl-dev \
     libxslt-dev \
+    libzstd-dev \
+    libzstd1 \
     make \
     perl \
 # clear apt cache

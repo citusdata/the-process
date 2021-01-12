@@ -82,6 +82,7 @@ RUN apt-get update \
     autoconf \
     build-essential \
     ca-certificates \
+    cpanminus \
     curl \
     debian-archive-keyring \
     gcc \
@@ -103,6 +104,9 @@ RUN apt-get update \
     perl \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
+
+# perl's lib IPC::Run is required to run tap tests
+RUN cpanm install IPC::Run
 
 # make special locales available
 COPY locale.gen /etc/locale.gen

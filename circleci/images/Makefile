@@ -13,7 +13,7 @@ PG_VERSIONS = 12.4 13.0
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
 CITUS_UPGRADE_PG_VERSIONS = 12.4 
-CITUS_UPGRADE_VERSIONS = v9.0.0
+CITUS_UPGRADE_VERSIONS = v9.0.0 v10.0.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets

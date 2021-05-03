@@ -112,12 +112,12 @@ build-pgupgradetester:
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
-		--tag=${DOCKER_REPO}/pgupgradetester:11-12-13${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/pgupgradetester:12-13${TAG_SUFFIX}
 
 build-all:: build-pgupgradetester
 
 push-pgupgradetester: build-pgupgradetester
-	docker push ${DOCKER_REPO}/pgupgradetester:11-12-13${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/pgupgradetester:12-13${TAG_SUFFIX}
 
 push-all:: push-pgupgradetester
 

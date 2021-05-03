@@ -18,7 +18,7 @@ h2==4.0.0 ; python_version >= '3.6.0'
 hpack==4.0.0
 hyperframe==6.0.0 ; python_version >= '3.6.0'
 itsdangerous==1.1.0
-jinja2==2.11.2
+jinja2==2.11.3
 kaitaistruct==0.9
 ldap3==2.8.1
 markupsafe==1.1.1

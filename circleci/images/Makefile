@@ -9,8 +9,7 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS = 12.8 13.4
-# 14~beta3
+PG_VERSIONS = 12.8 13.4 14~beta3
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
 CITUS_UPGRADE_PG_VERSIONS = 12.8 
@@ -116,12 +115,12 @@ build-pgupgradetester:
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
-		--tag=${DOCKER_REPO}/pgupgradetester:12.8-13.4${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/pgupgradetester:12.8-13.4-14beta3${TAG_SUFFIX}
 
 build-all:: build-pgupgradetester
 
 push-pgupgradetester: build-pgupgradetester
-	docker push ${DOCKER_REPO}/pgupgradetester:12.8-13.4${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/pgupgradetester:12.8-13.4-14beta3${TAG_SUFFIX}
 
 push-all:: push-pgupgradetester
 

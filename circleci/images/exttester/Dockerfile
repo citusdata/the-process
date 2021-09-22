@@ -32,23 +32,24 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ARG PG_VERSION
+ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
 
 WORKDIR /build/
-RUN curl -fLO "http://ftp.postgresql.org/pub/source/v${PG_VERSION}/postgresql-${PG_VERSION}.tar.bz2"
+RUN curl -fLO "http://ftp.postgresql.org/pub/source/v${PG_VERSION_CLEAN}/postgresql-${PG_VERSION_CLEAN}.tar.bz2"
 
-RUN tar jxf "postgresql-${PG_VERSION}.tar.bz2"
+RUN tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
 
 # apply optional patches that might be required for a successful testsuite
-WORKDIR /build/postgresql-${PG_VERSION}/
+WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/
 COPY patches/ patches/
 SHELL ["/bin/bash", "-c"]
-RUN if [ -d "patches/${PG_VERSION}/" ]; \
+RUN if [ -d "patches/${PG_VERSION_CLEAN}/" ]; \
     then \
-        git apply patches/${PG_VERSION}/*.patch; \
+        git apply patches/${PG_VERSION_CLEAN}/*.patch; \
     fi;
 
-WORKDIR /build/postgresql-${PG_VERSION}/build
+WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
 RUN make -sj8
 
@@ -58,16 +59,17 @@ WORKDIR /collect
 
 # TODO prepare all these copies in an intermediate layer
 ARG PG_VERSION
+ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
 
 COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION}/build/src/test/isolation/pg_isolation_regress \
-	/build/postgresql-${PG_VERSION}/build/src/test/isolation/isolationtester \
+	/build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/pg_isolation_regress \
+	/build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/isolationtester \
 	build/postgresql-${PG_MAJOR}/build/src/test/isolation/
 
 # copy regress files in multiple layers as we only need a few
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/build/src/test/regress/regress.so usr/lib/postgresql/${PG_MAJOR}/lib/
-COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/regress/regress.so usr/lib/postgresql/${PG_MAJOR}/lib/
+COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
 
 FROM buildpack-deps:stretch

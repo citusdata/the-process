@@ -9,7 +9,7 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS = 12.8 13.4
+PG_VERSIONS = 12.8 13.4 14~beta3
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
 CITUS_UPGRADE_PG_VERSIONS = 12.8 
@@ -19,6 +19,7 @@ CITUS_UPGRADE_VERSIONS = v9.0.0 v10.1.0
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
+# $3 = PG_VERION_CLEAN
 
 build-extbuilder-$1:
 	docker build \
@@ -26,14 +27,14 @@ build-extbuilder-$1:
 		-f extbuilder/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
-		--tag=${DOCKER_REPO}/extbuilder:$1${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
 
 build-all:: build-extbuilder-$1
 
 build-extbuilder-all:: build-extbuilder-$1
 
 push-extbuilder-$1: build-extbuilder-$1
-	docker push ${DOCKER_REPO}/extbuilder:$1${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
 
 push-all:: push-extbuilder-$1
 
@@ -45,14 +46,15 @@ build-exttester-$1:
 		-f exttester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
-		--tag=${DOCKER_REPO}/exttester:$1${TAG_SUFFIX}
+		--build-arg=PG_VERSION_CLEAN=$3 \
+		--tag=${DOCKER_REPO}/exttester:$3${TAG_SUFFIX}
 
 build-all:: build-exttester-$1
 
 build-exttester-all:: build-exttester-$1
 
 push-exttester-$1: build-exttester-$1
-	docker push ${DOCKER_REPO}/exttester:$1${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/exttester:$3${TAG_SUFFIX}
 
 push-all:: push-exttester-$1
 
@@ -64,14 +66,14 @@ build-failtester-$1:
 		-f failtester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
-		--tag=${DOCKER_REPO}/failtester:$1${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/failtester:$3${TAG_SUFFIX}
 
 build-all:: build-failtester-$1
 
 build-failtester-all:: build-failtester-$1
 
 push-failtester-$1: build-failtester-$1
-	docker push ${DOCKER_REPO}/failtester:$1${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/failtester:$3${TAG_SUFFIX}
 
 push-all:: push-failtester-$1
 
@@ -79,11 +81,12 @@ push-failtester-all:: push-failtester-$1
 endef
 
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
-$(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'))))
+$(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
 define make-citus-upgrage-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
+# $3 = PG_VERION_CLEAN
 
 build-citusupgradetester-$1:
 	docker build \
@@ -92,18 +95,18 @@ build-citusupgradetester-$1:
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--build-arg=CITUS_VERSIONS="${CITUS_UPGRADE_VERSIONS}"\
-		--tag=${DOCKER_REPO}/citusupgradetester:$1${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/citusupgradetester:$3${TAG_SUFFIX}
 
 build-all:: build-citusupgradetester-$1
 build-citusupgradetester-all:: build-citusupgradetester-$1
 
 push-citusupgradetester-$1: build-citusupgradetester-$1
-	docker push ${DOCKER_REPO}/citusupgradetester:$1${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/citusupgradetester:$3${TAG_SUFFIX}
 
 push-all:: push-citusupgradetester-$1
 push-citusupgradetester-all:: push-citusupgradetester-$1
 endef
-$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'))))
+$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
 
 # pg upgrade image is 1 global image
@@ -112,12 +115,12 @@ build-pgupgradetester:
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
-		--tag=${DOCKER_REPO}/pgupgradetester:12.8-13.4${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/pgupgradetester:12.8-13.4-14beta3${TAG_SUFFIX}
 
 build-all:: build-pgupgradetester
 
 push-pgupgradetester: build-pgupgradetester
-	docker push ${DOCKER_REPO}/pgupgradetester:12.8-13.4${TAG_SUFFIX}
+	docker push ${DOCKER_REPO}/pgupgradetester:12.8-13.4-14beta3${TAG_SUFFIX}
 
 push-all:: push-pgupgradetester
 

@@ -123,7 +123,8 @@ ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 
 # add postgres repository
-RUN echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" > /etc/apt/sources.list.d/postgresql.list \
+RUN echo "deb https://apt.postgresql.org/pub/repos/apt stretch-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
+ && echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
 # infer the pgdgversion of postgres based on the $PG_VERSION
  && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}') \

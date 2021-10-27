@@ -1,4 +1,4 @@
-FROM python:3.6-slim-stretch
+FROM python:3.9.7-slim-bullseye
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -12,9 +12,10 @@ RUN apt-get update \
     ca-certificates \
     curl \
     debian-archive-keyring \
+    git \
     gnupg \
     gosu \
-    libcurl3 \
+    libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
     liblz4-1 \
@@ -44,8 +45,8 @@ ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 
 # add postgres repository
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt stretch-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt stretch-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
+RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
+ && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
 # infer the pgdgversion of postgres based on the $PG_VERSION
  && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ) \

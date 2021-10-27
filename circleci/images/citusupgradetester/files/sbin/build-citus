@@ -9,6 +9,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# given we might cherry-pick a fix to older releases, setup git to be able to commit
+git config --global user.email "citusbot@citusdata.com"
+git config --global user.name "citus bot"
+
 # read pg major version, error if not provided
 PG_MAJOR=${PG_MAJOR:?please provide the postgres major version}
 
@@ -17,7 +21,7 @@ CITUS_VERSIONS=${CITUS_VERSIONS:?please provide CITUS_VERSIONS to package in upg
 # install old citus versions
 for citus_version in ${CITUS_VERSIONS}
 do
-  git clone --branch $citus_version https://github.com/citusdata/citus.git --depth 1 /citus_$citus_version
+  git clone --branch $citus_version https://github.com/citusdata/citus.git /citus_$citus_version
 done
 
 basedir="$(pwd)"
@@ -33,6 +37,13 @@ build_ext() {
   mkdir -p "${builddir}" && cd "${builddir}"
 
   CFLAGS=-Werror "${citus_dir}/configure" PG_CONFIG="/usr/lib/postgresql/${pg_major}/bin/pg_config" --enable-coverage
+
+  pushd ${citus_dir}
+  # cherry-pick gcc10 fix if not already on the branch cherry-pick locally
+  if ! git merge-base --is-ancestor b8dd8f50d19a98e5d8ce355947d72a01c028c8b3 HEAD ; then
+    git cherry-pick b8dd8f50d19a98e5d8ce355947d72a01c028c8b3
+  fi
+  popd
 
   installdir="${builddir}/install"
   make -sj$(nproc) && mkdir -p "${installdir}" && make DESTDIR="${installdir}" install

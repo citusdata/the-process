@@ -3,7 +3,7 @@ DOCKER_REPO ?= citus
 
 # auto generated variables
 ifdef RELEASE
-	TAG_SUFFIX := -$(shell date +'%Y%m%d')
+	TAG_SUFFIX := -v$(shell date +'%Y_%m_%d')
 else
 	TAG_SUFFIX := -dev-$(shell date +'%Y%m%d%H%M')
 endif

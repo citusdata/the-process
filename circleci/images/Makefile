@@ -3,9 +3,9 @@ DOCKER_REPO ?= citus
 
 # auto generated variables
 ifdef RELEASE
-	TAG_SUFFIX :=
+	TAG_SUFFIX := -$(shell date +'%Y%m%d')
 else
-	TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')
+	TAG_SUFFIX := -dev-$(shell date +'%Y%m%d%H%M')
 endif
 
 # all postgres versions we test against

@@ -122,8 +122,8 @@ build-pgupgradetester:
 
 build-all:: build-pgupgradetester
 
-push-pgupgradetester: build-pgupgradetester
+push-pgupgradetester-all: build-pgupgradetester
 	docker push ${DOCKER_REPO}/pgupgradetester:${PG_UPGRADE_TESTER_VERSION}${TAG_SUFFIX}
 
-push-all:: push-pgupgradetester
+push-all:: push-pgupgradetester-all
 

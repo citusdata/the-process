@@ -1,8 +1,4 @@
 name: build-test-images
-env:
-  DOCKERHUB_USER_NAME: ${{ secrets.DOCKERHUB_USER_NAME }}
-  DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-  MAIN_BRANCH_NAME: master
 on:
   push:
     branches:
@@ -58,7 +54,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER_NAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-#      # If current branch is not ,build and publish live image
       - name: Build & Push all live images
         if: ${{github.ref_name == env.MAIN_BRANCH_NAME }}
         run: |

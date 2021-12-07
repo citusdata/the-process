@@ -1,11 +1,12 @@
 # config variable
 DOCKER_REPO ?= citus
+SHA_SUFFIX := $(shell git rev-parse --short HEAD)
 
 # auto generated variables
 ifdef RELEASE
-	TAG_SUFFIX := -v$(shell date +'%Y_%m_%d')
+	TAG_SUFFIX := -v${SHA_SUFFIX}
 else
-	TAG_SUFFIX := -dev-$(shell date +'%Y%m%d%H%M')
+	TAG_SUFFIX := -dev-${SHA_SUFFIX}
 endif
 
 # all postgres versions we test against

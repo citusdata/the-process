@@ -54,6 +54,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
  # The following block downgrades installed libpq5 and install the libpq5 version related to postgres version
  && apt-get install --allow-downgrades -y libpq5=${pgdg_version} \
  && apt-get install --allow-downgrades -y libpq-dev=${pgdg_version} \
+ && apt-get install --allow-downgrades postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
  # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 

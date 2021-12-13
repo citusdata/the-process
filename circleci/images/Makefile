@@ -90,7 +90,7 @@ $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(s
 define make-citus-upgrage-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-citusupgradetester-$1:
 	docker build \

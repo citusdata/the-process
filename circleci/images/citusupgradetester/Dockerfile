@@ -54,6 +54,10 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
  && apt-get install -y --no-install-recommends \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \
+ # All pg versions are dependent upon the latest libpq5 version which causes runtime errors
+ # The following block downgrades installed libpq5 and install the libpq5 version related to postgres version
+ && apt-get install --allow-downgrades -y libpq5=${pgdg_version} \
+    libpq-dev=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
  # clear apt cache
  && rm -rf /var/lib/apt/lists/*

@@ -1,18 +1,19 @@
 # config variable
 DOCKER_REPO ?= citus
+SHA_SUFFIX := $(shell git rev-parse --short HEAD)
 
 # auto generated variables
 ifdef RELEASE
-	TAG_SUFFIX :=
+	TAG_SUFFIX := -v${SHA_SUFFIX}
 else
-	TAG_SUFFIX := -dev$(shell date +'%Y%m%d%H%M')
+	TAG_SUFFIX := -dev-${SHA_SUFFIX}
 endif
 
 # all postgres versions we test against
 PG_VERSIONS = 12.8 13.4 14.0
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
-CITUS_UPGRADE_PG_VERSIONS = 12.8 
+CITUS_UPGRADE_PG_VERSIONS = 12.8
 CITUS_UPGRADE_VERSIONS = v9.0.0 v10.1.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS
@@ -115,12 +116,12 @@ build-pgupgradetester:
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
-		--tag=${DOCKER_REPO}/pgupgradetester:12.8-13.4-14.0${TAG_SUFFIX}
+		--tag=${DOCKER_REPO}/pgupgradetester:${PG_UPGRADE_TESTER_VERSION}${TAG_SUFFIX}
 
 build-all:: build-pgupgradetester
 
-push-pgupgradetester: build-pgupgradetester
+push-pgupgradetester-all: build-pgupgradetester
 	docker push ${DOCKER_REPO}/pgupgradetester:12.8-13.4-14.0${TAG_SUFFIX}
 
-push-all:: push-pgupgradetester
+push-all:: push-pgupgradetester-all
 

@@ -1,6 +1,6 @@
 # postgres doesn't ship their isolation tester in the server-dev images
 # we use this builder to build the isolation tester from a specific version
-FROM buildpack-deps:bullseye AS dev-tools-builder
+FROM buildpack-deps:buster AS dev-tools-builder
 
 RUN apt-get update \
 # install dependencies
@@ -12,6 +12,7 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
+    ggcov \
     gnupg \
     gosu \
     libcurl4 \
@@ -53,7 +54,7 @@ WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
 RUN make -sj8
 
-FROM buildpack-deps:bullseye AS dev-tools-collection
+FROM buildpack-deps:buster AS dev-tools-collection
 
 WORKDIR /collect
 
@@ -72,7 +73,7 @@ COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/te
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
 
-FROM buildpack-deps:bullseye
+FROM buildpack-deps:buster
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -123,8 +124,8 @@ ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 
 # add postgres repository
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
+RUN echo "deb https://apt.postgresql.org/pub/repos/apt buster-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
+ && echo "deb https://apt-archive.postgresql.org/pub/repos/apt buster-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
 # infer the pgdgversion of postgres based on the $PG_VERSION
  && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ) \

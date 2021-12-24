@@ -1,4 +1,4 @@
-FROM python:3.9.7-slim-buster
+FROM python:3.9.7-slim-bullseye
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -43,8 +43,8 @@ ENV PG_VERSIONS=$PG_VERSIONS
 # because docker uses /bin/sh to execute the RUN commands where
 # the below code requires /bin/bash.
 SHELL ["/bin/bash", "-c"]
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt buster-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt buster-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
+RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
+ && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
  && pkgs=(); \
     for PG_VERSION in $PG_VERSIONS; do \

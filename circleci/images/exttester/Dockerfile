@@ -12,7 +12,7 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
-    ggcov \
+    gcov \
     gnupg \
     gosu \
     libcurl4 \

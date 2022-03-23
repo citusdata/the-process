@@ -1,6 +1,5 @@
 name: build-test-images
-env:
-  MAIN_BRANCH: master
+
 on:
   push:
     branches:
@@ -10,7 +9,7 @@ on:
 
 jobs:
   build_dev_images:
-    if: ${{github.ref_name ==  env.MAIN_BRANCH }}
+    if: github.ref_name == 'master'
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
     strategy:
@@ -40,7 +39,7 @@ jobs:
           make push-${{ matrix.command }}-all
 
   build_release_images:
-    if: ${{github.ref_name ==  env.MAIN_BRANCH }}
+    if: github.ref_name == 'master'
     name: push-test-images-for-release
     runs-on: ubuntu-latest
     strategy:
@@ -57,7 +56,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build & Push all live images
-        if: ${{github.ref_name ==  env.MAIN_BRANCH }}
+        if: github.ref_name == 'master'
         run: |
           cd circleci/images
           RELEASE=1 make push-all

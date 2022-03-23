@@ -1,6 +1,6 @@
 name: build-test-images
 env:
-  MAIN_BRANCH: main
+  MAIN_BRANCH: master
 on:
   push:
     branches:

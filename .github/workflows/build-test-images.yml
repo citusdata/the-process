@@ -55,7 +55,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build & Push all live images
-        if: ${{github.ref_name == env.MAIN_BRANCH_NAME }}
+        if: ${{github.ref_name ==  'master' }}
         run: |
           cd circleci/images
           RELEASE=1 make push-all

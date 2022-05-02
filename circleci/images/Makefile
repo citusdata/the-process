@@ -11,6 +11,7 @@ endif
 
 # all postgres versions we test against
 PG_VERSIONS=13.4 14.0
+PG_SOURCE_VERSIONS=15~~devel+git+master
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-')
 
@@ -28,7 +29,9 @@ define make-image-targets
 build-extbuilder-$1:
 	docker build \
 		extbuilder/ \
+		--target=extbuilder \
 		-f extbuilder/Dockerfile \
+		--build-arg=BUILD_MODE=package \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
@@ -86,6 +89,35 @@ endef
 
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
 $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+
+define make-image-targets-source
+# $1 = PG_VERSION
+# $2 = PG_MAJOR
+# $3 = PG_VERSION_CLEAN
+# $4 = BUILD_MODE
+# $5 = PG_BRANCH
+
+build-extbuilder-$1:
+	docker build \
+		extbuilder/ \
+		-f extbuilder/Dockerfile \
+		--target=extbuilder \
+		--build-arg=BUILD_MODE=$4 \
+		--build-arg=PG_VERSION=$1 \
+		--build-arg=PG_MAJOR=$2 \
+		--build-arg=PG_BRANCH=$5 \
+		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
+
+build-all:: build-extbuilder-$1
+build-extbuilder-all:: build-extbuilder-$1
+push-extbuilder-$1: build-extbuilder-$1
+	docker push ${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
+push-all:: push-extbuilder-$1
+push-extbuilder-all:: push-extbuilder-$1
+endef
+
+# call make-image-targets-source($PG_VERSION, $PG_MAJOR, $PG_VERSION_CLEAN, $BUILD_MODE, $PG_BRANCH) for every version in PG_SOURCE_VERSIONS
+$(foreach element, $(PG_SOURCE_VERSIONS),$(eval $(call make-image-targets-source,$(shell echo $(element) | awk -F'+' '{print $$1}'),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | awk -F'+' '{print $$1}' | sed 's/~//g'),$(shell echo $(element) | awk -F'+' '{print $$2}'),$(shell echo $(element) | awk -F'+' '{print $$3}'))))
 
 define make-citus-upgrage-targets
 # $1 = PG_VERSION

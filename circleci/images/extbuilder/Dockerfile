@@ -1,114 +1,7 @@
-ARG BUILD_MODE=git
-# building postgres from a tag in source control
-FROM buildpack-deps:bullseye AS builder-git
+FROM buildpack-deps:bullseye
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    curl \
- && rm -rf /var/lib/apt/lists/*
-
-RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
-
-RUN apt-get update \
- && apt install -y --no-install-recommends \
-    build-essential \
-    bison \
-    clang \
-    debhelper-compat \
-    dh-exec \
-    docbook-xml \
-    docbook-xsl \
-    flex \
-    gdb \
-    gettext \
-    libio-pty-perl \
-    libipc-run-perl \
-    libldap2-dev \
-    liblz4-dev \
-    libpam-dev \
-    libperl-dev \
-    libsystemd-dev \
-    libxml2-utils \
-    libzstd-dev \
-    llvm-dev \
-    lz4 \
-    postgresql-common \
-    python3-dev \
-    systemtap-sdt-dev \
-    tcl-dev \
-    xsltproc \
-    zstd \
- && rm -rf /var/lib/apt/lists/*
-
-RUN groupadd -r builder -g 433 && \
-    useradd -u 431 -r -g builder -s /sbin/nologin -c "postgres build user" builder
-
-RUN mkdir /builder
-RUN chown builder:builder /builder 
-
-USER builder
-
-WORKDIR /builder
-
-ARG PG_MAJOR
-ARG PG_BRANCH=master
-ENV PG_VERSION=$PG_VERSION
-ENV PG_MAJOR=$PG_MAJOR
-
-RUN git clone -b ${PG_BRANCH} --depth 1 https://github.com/postgres/postgres.git postgresql
-RUN git clone -b ${PG_MAJOR} --depth 1 https://salsa.debian.org/postgresql/postgresql.git postgresql-debian
-
-RUN cp -rf postgresql-debian/debian postgresql
-
-WORKDIR /builder/postgresql
-
-#TODO do run tests, but it first needs to completely work
-RUN MAKEFLAGS=-s dpkg-buildpackage -rfakeroot -b -uc -us -jauto
-
-##########
-
-FROM buildpack-deps:bullseye AS postgres-installed-from-git
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    curl
-
-RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
-
-RUN mkdir /debs
-
-COPY --from=builder-git /builder/*.deb /debs
-RUN ls -al /debs
-
-ARG PG_MAJOR=15
-ARG PG_VERSION=${PG_MAJOR}~~devel
-
-ENV PG_MAJOR=$PG_MAJOR
-ENV PG_VERSION=$PG_VERSION
-
-RUN apt update \
- && apt install -y \
-    liblz4-1 \
-    liblz4-dev \
-    libzstd-dev \
-    libzstd1 \
-# install postgres from created deb packages
-# TODO figure out how to decipher the -1 automatically
-    /debs/postgresql-server-dev-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \
-    /debs/postgresql-client-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \
-    /debs/postgresql-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \
-    /debs/libpq5_${PG_VERSION}-1_amd64.deb \
-    /debs/libpq-dev_${PG_VERSION}-1_amd64.deb \
-# clear apt cache
- && rm -rf /var/lib/apt/lists/*
-
-#####
-
-FROM buildpack-deps:bullseye AS postgres-installed-from-package
+# add unpriviliged user for tests
+RUN useradd -ms /bin/bash circleci
 
 RUN apt-get update \
 # install dependencies
@@ -160,10 +53,5 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
-#####
-
-FROM postgres-installed-from-$BUILD_MODE AS extbuilder
-
-RUN useradd -ms /bin/bash circleci
 USER circleci
 WORKDIR /home/circleci

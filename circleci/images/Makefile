@@ -35,9 +35,7 @@ define make-image-targets
 build-extbuilder-$1:
 	docker build \
 		extbuilder/ \
-		--target=extbuilder \
 		-f extbuilder/Dockerfile \
-		--build-arg=BUILD_MODE=package \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
@@ -106,9 +104,8 @@ define make-image-targets-source
 build-extbuilder-$1:
 	docker build \
 		extbuilder/ \
-		-f extbuilder/Dockerfile \
+		-f extbuilder/Dockerfile.$4 \
 		--target=extbuilder \
-		--build-arg=BUILD_MODE=$4 \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--build-arg=PG_BRANCH=$5 \

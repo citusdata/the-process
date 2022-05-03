@@ -20,12 +20,6 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-')
 CITUS_UPGRADE_PG_VERSIONS=13.4
 CITUS_UPGRADE_VERSIONS=v9.5.0 v10.1.0
 
-docker-debug:
-	docker version
-
-push-extbuilder-all:: docker-debug
-build-extbuilder-all:: docker-debug
-
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets
 # $1 = PG_VERSION

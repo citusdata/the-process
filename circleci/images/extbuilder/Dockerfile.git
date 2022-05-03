@@ -96,7 +96,6 @@ RUN apt update \
     libzstd-dev \
     libzstd1 \
 # install postgres from created deb packages
-# TODO figure out how to decipher the -1 automatically
     /debs/postgresql-server-dev-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \
     /debs/postgresql-client-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \
     /debs/postgresql-${PG_MAJOR}_${PG_VERSION}-1_amd64.deb \

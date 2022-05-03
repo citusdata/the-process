@@ -80,7 +80,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 
 RUN mkdir /debs
 
-COPY --from=builder-git /builder/*.deb /debs
+COPY --from=builder-git /builder/*.deb /debs/
 RUN ls -al /debs
 
 ARG PG_MAJOR=15

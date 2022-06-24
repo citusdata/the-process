@@ -9,7 +9,7 @@ on:
 
 jobs:
   build_dev_images:
-    if: github.ref_name != 'master'
+    if: github.ref_name != 'main'
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
     strategy:
@@ -32,14 +32,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER_NAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # If current branch is not master,build and publish dev image
+      # If current branch is not main, build and publish dev image
       - name: Build & Push all dev images
         run: |
           cd circleci/images
           make push-${{ matrix.command }}-all
 
   build_release_images:
-    if: github.ref_name == 'master'
+    if: github.ref_name == 'main'
     name: push-test-images-for-release
     runs-on: ubuntu-latest
     strategy:

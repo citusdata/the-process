@@ -10,9 +10,9 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS=13.4 14.0
+PG_VERSIONS=13.4 14.0 15~beta1
 
-PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-')
+PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807

@@ -53,9 +53,12 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
         pkgs+=("postgresql-client-${PG_MAJOR}=${pgdg_version}"); \
         pkgs+=("postgresql-${PG_MAJOR}=${pgdg_version}"); \
         pkgs+=("postgresql-server-dev-${PG_MAJOR}=${pgdg_version}"); \
+        last_pgdg_version=$pgdg_version; \
     done; \
+    pkgs+=("libpq-dev=${last_pgdg_version}"); \
+    pkgs+=("libpq5=${last_pgdg_version}"); \
     echo ${pkgs[@]}\
- && apt-get install -y --no-install-recommends \
+ && apt-get install -y --no-install-recommends --allow-downgrades \
     postgresql-common \
     ${pkgs[@]} \
  && rm -rf /var/lib/apt/lists/*

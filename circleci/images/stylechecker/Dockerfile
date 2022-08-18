@@ -1,5 +1,5 @@
 FROM alpine:3.9
-ARG TOOLS_VERSION=0.7.9
+ARG TOOLS_VERSION
 
 RUN apk add --no-cache --virtual installdeps curl make sed && \
     apk add --no-cache \

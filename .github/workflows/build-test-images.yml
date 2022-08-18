@@ -21,6 +21,7 @@ jobs:
           - failtester
           - citusupgradetester
           - pgupgradetester
+          - stylechecker
 
     steps:
       - name: Checkout repository

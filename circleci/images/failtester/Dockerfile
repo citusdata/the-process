@@ -27,7 +27,9 @@ RUN apt-get update \
     libzstd-dev \
     libzstd1 \
     locales \
+    lsof \
     make \
+    net-tools \
     perl \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*

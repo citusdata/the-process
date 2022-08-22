@@ -10,14 +10,14 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS=13.4 14.0 15~beta3
+PG_VERSIONS=13.8 14.5 15~beta3
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
-CITUS_UPGRADE_PG_VERSIONS=13.4
+CITUS_UPGRADE_PG_VERSIONS=13.8
 CITUS_UPGRADE_VERSIONS=v9.5.0 v10.1.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS

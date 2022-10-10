@@ -10,7 +10,7 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS=13.8 14.5 15~rc1
+PG_VERSIONS=13.8 14.5 15~rc2
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 

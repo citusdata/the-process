@@ -24,7 +24,7 @@ CITUS_UPGRADE_VERSIONS=v9.5.0 v10.1.0
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-extbuilder-$1:
 	docker build \
@@ -91,7 +91,7 @@ $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(s
 define make-citus-upgrage-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-citusupgradetester-$1:
 	docker build \

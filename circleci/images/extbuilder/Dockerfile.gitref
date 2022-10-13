@@ -1,0 +1,68 @@
+FROM buildpack-deps:bullseye
+
+# add unpriviliged user for tests
+RUN useradd -ms /bin/bash circleci
+
+RUN apt-get update \
+# install dependencies
+ && apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    autoconf \
+    build-essential \
+    bison \
+    ca-certificates \
+    clang \
+    clang-tools \
+    curl \
+    debian-archive-keyring \
+    flex \
+    gcc \
+    git \
+    gnupg \
+    gosu \
+    libcurl4 \
+    libcurl4-openssl-dev \
+    libicu-dev \
+    libkrb5-dev \
+    liblz4-1 \
+    liblz4-dev \
+    libpam0g-dev \
+    libreadline-dev \
+    libselinux1-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libxslt1-dev \
+    libzstd-dev \
+    libzstd1 \
+    llvm-dev \
+    locales \
+    make \
+    perl \
+    uuid-dev \
+# clear apt cache
+ && rm -rf /var/lib/apt/lists/*
+
+ARG PG_GITREF
+ARG PG_MAJOR
+ENV PG_GITREF=$PG_GITREF
+ENV PG_MAJOR=$PG_MAJOR
+
+WORKDIR /pg_source/
+RUN git clone --depth 1 https://github.com/postgres/postgres.git --branch ${PG_GITREF} ${PG_GITREF}
+
+WORKDIR /pg_source/${PG_GITREF}
+RUN ./configure \
+    --prefix /usr/lib/postgresql/${PG_MAJOR}/ \
+    --with-icu \
+    --with-libxml \
+    --with-libxslt \
+    --with-llvm \
+    --with-lz4 \
+    --with-openssl \
+    --with-uuid=e2fs \
+  && make -j8 install \
+  && make -j8 -C contrib install
+
+USER circleci
+WORKDIR /home/circleci

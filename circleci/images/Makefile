@@ -11,6 +11,7 @@ endif
 
 # all postgres versions we test against
 PG_VERSIONS=13.8 14.5 15~rc2
+PG_GITREFS=15-REL_15_STABLE
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
@@ -87,6 +88,43 @@ endef
 
 # call make-image-targets($PG_VERSION, $PG_MAJOR, $PG_VERSION_CLEAN) for every version in PG_VERSIONS
 $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+
+# code below creates targets for all git references in PG_GITREFS
+define make-gitrefs-targets
+# $1 = PG_GITREF
+# $2 = PG_MAJOR
+# $3 = PG_VERSION_CLEAN
+
+debug-gitrefs:
+	echo "PG_GITREF : ", $1
+	echo "PG_MAJOR : ", $2
+	echo "PG_VERSION_CLEAN : ", $3
+
+debug:: debug-gitrefs
+
+build-extbuilder-$1:
+	docker build \
+		extbuilder/ \
+		-f extbuilder/Dockerfile.gitref \
+		--build-arg=PG_GITREF=$1 \
+		--build-arg=PG_MAJOR=$2 \
+		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
+
+build-all:: build-extbuilder-$1
+
+build-extbuilder-all:: build-extbuilder-$1
+
+push-extbuilder-$1: build-extbuilder-$1
+	 docker push ${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
+
+push-all:: push-extbuilder-$1
+
+push-extbuilder-all:: push-extbuilder-$1
+
+endef
+
+# call make-gitrefs-targets($PG_GITREF, $PG_MAJOR, $PG_VERSION_CLEAN) for every version in PG_GITREFS
+$(foreach element,$(PG_GITREFS),$(eval $(call make-gitrefs-targets,$(shell echo $(element) | awk -F- '{ print $$2 }'),$(shell echo $(element) | awk -F- '{ print $$1 }'),$(element))))
 
 define make-citus-upgrage-targets
 # $1 = PG_VERSION

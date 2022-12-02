@@ -12,6 +12,7 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
+    gdb \
     gnupg \
     gosu \
     lcov \

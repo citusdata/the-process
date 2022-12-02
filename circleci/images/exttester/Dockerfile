@@ -12,10 +12,8 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
-    gdb \
     gnupg \
     gosu \
-    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
@@ -90,8 +88,10 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
+    gdb \
     gnupg \
     gosu \
+    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \

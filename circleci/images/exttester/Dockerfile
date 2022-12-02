@@ -14,6 +14,7 @@ RUN apt-get update \
     gcc \
     gnupg \
     gosu \
+    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \

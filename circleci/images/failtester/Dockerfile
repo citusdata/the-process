@@ -12,9 +12,11 @@ RUN apt-get update \
     ca-certificates \
     curl \
     debian-archive-keyring \
+    gdb \
     git \
     gnupg \
     gosu \
+    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \

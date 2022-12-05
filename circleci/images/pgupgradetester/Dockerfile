@@ -33,6 +33,9 @@ RUN apt-get update \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
+# Add codeclimate
+RUN mkdir -p codeclimate/ && curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./codeclimate/test-reporter && chmod +x ./codeclimate/test-reporter
+
  # add postgres signing key
 RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 

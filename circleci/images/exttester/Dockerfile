@@ -12,10 +12,8 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
-    gdb \
     gnupg \
     gosu \
-    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
@@ -90,8 +88,10 @@ RUN apt-get update \
     curl \
     debian-archive-keyring \
     gcc \
+    gdb \
     gnupg \
     gosu \
+    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
@@ -115,6 +115,9 @@ RUN cpanm install IPC::Run
 # make special locales available
 COPY locale.gen /etc/locale.gen
 RUN locale-gen
+
+# Add codeclimate
+RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-test-reporter && chmod +x /usr/local/bin/cc-test-reporter
 
 # add postgres signing key
 RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -

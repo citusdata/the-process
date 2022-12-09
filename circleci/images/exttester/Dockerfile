@@ -137,7 +137,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}=${pgdg_version} \
+    postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*

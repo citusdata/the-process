@@ -57,7 +57,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
         PG_MAJOR=$(echo ${PG_VERSION} | awk -F'[^0-9]*' '/[0-9]/ { print $1 }'); \
         pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ); \
         pkgs+=("postgresql-client-${PG_MAJOR}=${pgdg_version}"); \
-        pkgs+=("postgresql-${PG_MAJOR}=${pgdg_version}"); \
+        pkgs+=("postgresql-${PG_MAJOR}-dbgsym=${pgdg_version}"); \
         pkgs+=("postgresql-server-dev-${PG_MAJOR}=${pgdg_version}"); \
         last_pgdg_version=$pgdg_version; \
     done; \

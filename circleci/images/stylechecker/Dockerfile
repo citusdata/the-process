@@ -6,6 +6,7 @@ RUN apk add --no-cache --virtual installdeps curl make sed && \
         ca-certificates \
         bash \
         git \
+        grep \
         gzip \
         openssh \
         perl \

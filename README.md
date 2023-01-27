@@ -62,4 +62,4 @@ This container is a special beast. Besides having the testing dependencies insta
 
 ### stylechecker
 
-TODO: this image has not changed and is currently not built by the Makefile. Future work.
+This image is a small alpine image that contains necessary tools to run various scripts in our CI environment. It is not based on any of the images listed here.

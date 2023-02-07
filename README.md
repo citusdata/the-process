@@ -12,7 +12,7 @@
 
 ## Introduction
 
-This repository contains the source code for docker images that are used in [citus testing](https://github.com/citusdata/citus/blob/master/.circleci/config.yml). The images are pushed to [docker hub](https://hub.docker.com/u/citus). There is no hooking logic between this repository and the docker hub account. It is used purely for the storage of our images source code.
+This repository contains the source code for docker images that are used in [citus testing](https://github.com/citusdata/citus/blob/main/.circleci/config.yml). The images are pushed to [docker hub](https://hub.docker.com/u/citus). There is no hooking logic between this repository and the docker hub account. It is used purely for the storage of our images source code.
 
 ## 1. Makefile
 
@@ -38,7 +38,7 @@ Details on the images. Mostly uninteresting for users. Please refer to the [Make
 
 ### extbuilder
 
-The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
+The [extbuilder](https://github.com/citusdata/the-process/tree/main/circleci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/main/circleci/images/extbuilder):
 
 This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is built for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
 

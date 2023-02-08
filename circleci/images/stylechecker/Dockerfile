@@ -1,22 +1,41 @@
-FROM alpine:3.9
+FROM alpine:latest
 ARG TOOLS_VERSION
 
-RUN apk add --no-cache --virtual installdeps curl make sed && \
-    apk add --no-cache \
-        ca-certificates \
-        bash \
-        git \
-        grep \
-        gzip \
-        openssh \
-        perl \
-        tar \
-        uncrustify && \
-    curl -sfLO "https://github.com/citusdata/tools/archive/v${TOOLS_VERSION}.tar.gz" && \
-    tar xzf "v${TOOLS_VERSION}.tar.gz" && \
-    cd "tools-${TOOLS_VERSION}" && \
-    sed -i -e's/align_number_left/align_number_right/g' uncrustify/citus-style.cfg && \
-    make uncrustify/.install && \
-    cd .. && \
-    rm -rf "citus-${VERSION}" "v${TOOLS_VERSION}.tar.gz" && \
-    apk del installdeps
+COPY ./files/etc/requirements.txt /tmp/etc/
+# openssh is needed in the image for CircleCI to pull the repo over ssh
+RUN apk add --no-cache --virtual installdeps \
+      curl \
+      make \
+      cmake \
+      g++ \
+      gcc \
+      gzip \
+      musl-dev \
+      py3-pip \
+      python3-dev \
+      tar \
+  && apk add --no-cache \
+      ca-certificates \
+      bash \
+      git \
+      grep \
+      openssh \
+      perl \
+      python3 \
+      py3-packaging \
+  && curl -L "https://github.com/citusdata/tools/archive/v${TOOLS_VERSION}.tar.gz" | tar xz \
+  && cd "tools-${TOOLS_VERSION}" \
+  && make uncrustify/.install \
+  && cd .. \
+  && rm -rf "citus-${VERSION}" "v${TOOLS_VERSION}.tar.gz" \
+  && curl -L "https://github.com/uncrustify/uncrustify/archive/uncrustify-0.68.1.tar.gz" | tar xz \
+  && cd uncrustify-uncrustify-0.68.1/ \
+  && mkdir build \
+  && cd build \
+  && cmake .. \
+  && make -j5 \
+  && make install \
+  && cd ../.. \
+  && rm -rf uncrustify-uncrustify-0.68.1/ \
+  && pip3 install -Ir /tmp/etc/requirements.txt \
+  && apk del installdeps

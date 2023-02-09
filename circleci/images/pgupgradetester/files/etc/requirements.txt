@@ -21,7 +21,7 @@ jinja2==3.0.1; python_version >= '3.6'
 kaitaistruct==0.9
 ldap3==2.9.1
 markupsafe==2.0.1; python_version >= '3.6'
-mitmproxy==7.0.4
+mitmproxy==8.0.0
 msgpack==1.0.2
 passlib==1.7.4
 protobuf==3.18.3

@@ -17,7 +17,7 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
-CITUS_UPGRADE_PG_VERSIONS=13.9
+CITUS_UPGRADE_PG_VERSIONS=$(shell head -n1 PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
 CITUS_UPGRADE_VERSIONS=v9.5.0 v10.1.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS

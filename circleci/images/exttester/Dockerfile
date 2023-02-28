@@ -111,9 +111,9 @@ RUN apt-get update \
 
 # install rust
 RUN curl --proto '=https' --tlsv1.2 --silent --show-error https://sh.rustup.rs | sh -s -- -y \
-  && rustup install nightly \
-  && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu \
-  && rustup default nightly
+  && /root/.cargo/bin/rustup install nightly \
+  && /root/.cargo/bin/rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu \
+  && /root/.cargo/bin/rustup default nightly
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 

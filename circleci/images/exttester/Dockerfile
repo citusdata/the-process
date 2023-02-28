@@ -110,7 +110,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install rust
-RUN curl --proto '=https' --tlsv1.2 --silent --show-error https://sh.rustup.rs | sh -s -- -y
+RUN curl --proto '=https' --tlsv1.2 --silent --show-error https://sh.rustup.rs | sh -s -- -y \
+  && rustup install nightly \
+  && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu \
+  && rustup default nightly
+
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # perl's lib IPC::Run is required to run tap tests

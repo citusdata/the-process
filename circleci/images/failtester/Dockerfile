@@ -1,3 +1,4 @@
+# we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
 FROM python:3.9.7-slim-bullseye
 
 # add unpriviliged user for tests

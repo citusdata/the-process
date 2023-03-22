@@ -87,7 +87,6 @@ RUN apt-get update \
     cpanminus \
     curl \
     debian-archive-keyring \
-    expect \
     gcc \
     gdb \
     gnupg \

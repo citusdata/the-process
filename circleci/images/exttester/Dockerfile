@@ -138,11 +138,14 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # infer the pgdgversion of postgres based on the $PG_VERSION
  && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ) \
  && apt-get install -y --no-install-recommends --allow-downgrades \
+    libdbi-perl \
+    libdbd-pg-perl \
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
+    postgresql-${PG_MAJOR}-wal2json \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 

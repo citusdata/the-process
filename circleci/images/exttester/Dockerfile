@@ -144,10 +144,16 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
     libpq5=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
-    postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json \
+    postgresql-server-dev-${PG_MAJOR}=${pgdg_version}
+
+# wal2json not available yet for PG16
+RUN if [ "$PG_MAJOR" != "16" ]; \
+    then \
+        apt-get install -y --no-install-recommends --allow-downgrades postgresql-${PG_MAJOR}-wal2json; \
+    fi;
+
 # clear apt cache
- && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/lib/apt/lists/*
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

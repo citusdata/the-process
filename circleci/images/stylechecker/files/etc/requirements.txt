@@ -21,7 +21,7 @@ typing-extensions==4.5.0; python_version >= '3.7'
 asgiref==3.4.1; python_version >= '3.6'
 blinker==1.4
 brotli==1.0.9
-certifi==2022.12.7; python_version >= '3.6'
+certifi==2023.7.22; python_version >= '3.6'
 cffi==1.15.1
 construct==2.9.45
 cryptography==40.0.2

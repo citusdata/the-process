@@ -23,16 +23,16 @@ case $key in
     CITUS_PRE_TAR="$2"
     shift # pass argument
     shift # pass value
-    ;;   
+    ;;
     -t|--target)
     TARGET="$2"
     shift # pass argument
     shift # pass value
-    ;;    
+    ;;
     *) # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
-    ;;    
+    ;;
 esac
 done
 
@@ -40,7 +40,7 @@ done
 cp  ${CIRCLE_WORKING_DIRECTORY}/build-$PG_MAJOR/Makefile.global ${CIRCLE_WORKING_DIRECTORY}
 status=0
 
-gosu circleci make -C "${CIRCLE_WORKING_DIRECTORY}/src/test/regress" $TARGET bindir=/usr/lib/postgresql/$PG_MAJOR/bin citus-pre-tar=$CITUS_PRE_TAR citus-post-tar=/home/circleci/project/install-$PG_MAJOR.tar || status=$?
+gosu runner make -C "${CIRCLE_WORKING_DIRECTORY}/src/test/regress" $TARGET bindir=/usr/lib/postgresql/$PG_MAJOR/bin citus-pre-tar=$CITUS_PRE_TAR citus-post-tar=/home/runner/project/install-$PG_MAJOR.tar || status=$?
 
 diffs="${CIRCLE_WORKING_DIRECTORY}/src/test/regress/regression.diffs"
 

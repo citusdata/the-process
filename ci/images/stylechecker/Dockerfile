@@ -3,7 +3,7 @@ FROM alpine:latest
 ARG TOOLS_VERSION
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-# openssh is needed in the image for CircleCI to pull the repo over ssh
+# openssh is needed in the image to pull the repo over ssh
 RUN apk add --no-cache --virtual installdeps \
       curl \
       make \

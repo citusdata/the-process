@@ -12,11 +12,11 @@
 
 ## Introduction
 
-This repository contains the source code for docker images that are used in [citus testing](https://github.com/citusdata/citus/blob/master/.circleci/config.yml). The images are pushed to [docker hub](https://hub.docker.com/u/citus). There is no hooking logic between this repository and the docker hub account. It is used purely for the storage of our images source code.
+This repository contains the source code for docker images that are used in [citus testing](https://github.com/citusdata/citus/blob/master/.github). The images are pushed to [docker hub](https://hub.docker.com/u/citus). There is no hooking logic between this repository and the docker hub account. It is used purely for the storage of our images source code.
 
 ## 1. Makefile
 
-The creation of the images is driven by the [Makefile](circleci/images/Makefile). The Makefile has the list of pinned versions of postgres we build against. For images specific to the postgres version there will be targets to build and push the image for a specific postgres version, or all pinned versions at once. Secondly all images can be build with the `build-all` target and pushed with `push-all`.
+The creation of the images is driven by the [Makefile](ci/images/Makefile). The Makefile has the list of pinned versions of postgres we build against. For images specific to the postgres version there will be targets to build and push the image for a specific postgres version, or all pinned versions at once. Secondly all images can be build with the `build-all` target and pushed with `push-all`.
 
 During development and maintenance of the images you can freely call `make` with the desired targets. The images will be tagged with a `-devYYYYmmddHHMM` suffix to indicate these are development images. Since the minute is included in the tag, most often this will create new tags for every run. A new tag doesn't mean new images. The normal docker caching system is active. When a layer does not change it will be reused in a new tagged artifact.
 
@@ -38,7 +38,7 @@ Details on the images. Mostly uninteresting for users. Please refer to the [Make
 
 ### extbuilder
 
-The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/circleci/images/extbuilder):
+The [extbuilder](https://github.com/citusdata/the-process/tree/master/ci/images/extbuilder) image is the first image that other jobs depend on in our tests. The [extbuilder](https://github.com/citusdata/the-process/tree/master/ci/images/extbuilder):
 
 This image contains all the artifacts required to produce a build of citus binaries for exactly 1 postgres version. This image is built for every supported Postgres version. Any scripts driving the build are contained in the citus repostiroy.
 

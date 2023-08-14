@@ -14,7 +14,7 @@ jobs:
       # Need the repo checked out in order to read the file
       - uses: actions/checkout@v3
       - id: get_versions
-        run: cat circleci/images/PG_VERSIONS >> $GITHUB_OUTPUT
+        run: cat ci/images/PG_VERSIONS >> $GITHUB_OUTPUT
     outputs:
       # Will look like '["13.9", "14.6", "15.1"]'
       pgversions: ${{ toJSON(steps.get_versions.outputs.*) }}
@@ -47,7 +47,7 @@ jobs:
       # If current branch is not master,build and publish dev image
       - name: Build & Push all dev images
         run: |
-          cd circleci/images
+          cd ci/images
           make push-${{ matrix.command }}-${{ matrix.pgversion }}
 
   build_dev_images_shared:
@@ -75,7 +75,7 @@ jobs:
       # If current branch is not master,build and publish dev image
       - name: Build & Push all dev images
         run: |
-          cd circleci/images
+          cd ci/images
           make push-${{ matrix.command }}-all
 
 
@@ -98,5 +98,5 @@ jobs:
 
       - name: Build & Push all live images
         run: |
-          cd circleci/images
+          cd ci/images
           RELEASE=1 make push-all

@@ -2,6 +2,9 @@
 # we use this builder to build the isolation tester from a specific version
 FROM buildpack-deps:bullseye AS dev-tools-builder
 
+# add unpriviliged user for tests
+RUN useradd -ms /bin/bash runner
+
 RUN apt-get update \
 # install dependencies
  && apt-get install -y --no-install-recommends \
@@ -75,7 +78,7 @@ RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${P
 FROM buildpack-deps:bullseye
 
 # add unpriviliged user for tests
-RUN useradd -ms /bin/bash circleci
+RUN useradd -ms /bin/bash runner
 
 RUN apt-get update \
 # install dependencies
@@ -152,10 +155,13 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 
-# setup /var/run/postgresql for use with circleci
+# setup /var/run/postgresql for use with runner
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
+
+# create tmp directory for runner user
+RUN mkdir -m 1777 /__w
 
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
 
-WORKDIR /home/circleci
+WORKDIR /home/runner

@@ -1,7 +1,8 @@
-FROM buildpack-deps:bullseye
+# we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
+FROM python:3.9.7-slim-bullseye AS base
 
 # add unpriviliged user for tests
-RUN useradd -ms /bin/bash circleci
+RUN useradd -ms /bin/bash runner
 
 RUN apt-get update \
 # install dependencies
@@ -12,9 +13,11 @@ RUN apt-get update \
     ca-certificates \
     curl \
     debian-archive-keyring \
-    gcc \
+    gdb \
+    git \
     gnupg \
     gosu \
+    lcov \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
@@ -29,8 +32,16 @@ RUN apt-get update \
     locales \
     make \
     perl \
+
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
+
+# make special locales available
+COPY locale.gen /etc/locale.gen
+RUN locale-gen
+
+# Add codeclimate
+RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-test-reporter && chmod +x /usr/local/bin/cc-test-reporter
 
 # add postgres signing key
 RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
@@ -55,5 +66,45 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
-USER circleci
-WORKDIR /home/circleci
+# add postgress to the path
+ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
+
+# setup /var/run/postgresql for use with runner
+RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
+
+##############################################################################
+FROM base AS builder
+
+RUN apt update \
+ && apt install -y \
+    git \
+    libkrb5-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG CITUS_VERSIONS
+ENV CITUS_VERSIONS=$CITUS_VERSIONS
+
+WORKDIR /build/
+
+COPY files/sbin/build-citus .
+RUN ./build-citus
+
+##############################################################################
+FROM base
+
+# we need to be able to untar the binaries as the runner user
+RUN chown -R runner /usr/lib/postgresql/ /usr/include/postgresql/ /usr/share/postgresql/
+
+# create tmp directory for runner user
+RUN mkdir -m 1777 /__w
+
+COPY ./files/etc/requirements.txt /tmp/etc/
+RUN pip3 install -Ir /tmp/etc/requirements.txt
+
+WORKDIR /home/runner
+
+ARG CITUS_VERSIONS
+ENV CITUS_VERSIONS=$CITUS_VERSIONS
+
+# copy compiled citus versions
+COPY --from=builder /build/ /

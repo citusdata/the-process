@@ -2,7 +2,7 @@
 FROM python:3.9.7-slim-bullseye
 
 # add unpriviliged user for tests
-RUN useradd -ms /bin/bash circleci
+RUN useradd -ms /bin/bash runner
 
 RUN apt-get update \
 # install dependencies
@@ -70,10 +70,12 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 
-# setup /var/run/postgresql for use with circleci
+# setup /var/run/postgresql for use with runner
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
+
+# create tmp directory for runner user
+RUN mkdir -m 1777 /__w
 
 COPY ./files/etc/requirements.txt /tmp/etc/
 RUN pip3 install -Ir /tmp/etc/requirements.txt
 
-WORKDIR /home/circleci

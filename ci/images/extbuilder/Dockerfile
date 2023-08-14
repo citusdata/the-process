@@ -3,8 +3,9 @@ FROM buildpack-deps:bullseye
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash runner
 
-RUN apt-get update \
+# clear apt cache
 # install dependencies
+RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     apt-transport-https \
     autoconf \
@@ -29,7 +30,6 @@ RUN apt-get update \
     locales \
     make \
     perl \
-# clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
 # add postgres signing key
@@ -44,7 +44,6 @@ ENV PG_MAJOR=$PG_MAJOR
 RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
  && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
  && apt-get update \
-# infer the pgdgversion of postgres based on the $PG_VERSION
  && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ) \
  && apt-get install -y --no-install-recommends --allow-downgrades \
     libpq-dev=${pgdg_version} \
@@ -52,7 +51,6 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-# clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
 USER runner

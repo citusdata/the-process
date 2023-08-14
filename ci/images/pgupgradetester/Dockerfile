@@ -4,8 +4,9 @@ FROM python:3.9.7-slim-bullseye
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash runner
 
-RUN apt-get update \
 # install dependencies
+# clear apt cache
+RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     apt-transport-https \
     autoconf \
@@ -31,7 +32,6 @@ RUN apt-get update \
     libzstd1 \
     make \
     perl \
-# clear apt cache
  && rm -rf /var/lib/apt/lists/*
 
 # Add codeclimate

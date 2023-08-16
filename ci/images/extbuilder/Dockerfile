@@ -53,7 +53,8 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
  && rm -rf /var/lib/apt/lists/*
 
-USER runner
 # create tmp directory for runner user
 RUN mkdir -m 1777 /__w
+
+USER runner
 WORKDIR /home/runner

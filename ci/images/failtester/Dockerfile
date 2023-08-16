@@ -74,7 +74,8 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 # create tmp directory for runner user
-RUN mkdir -m 1777 /__w
+RUN mkdir -p /__w && chown -R runner:runner /__w && chmod 2777 /__w
+
 
 COPY ./files/etc/requirements.txt /tmp/etc/
 RUN pip3 install -Ir /tmp/etc/requirements.txt

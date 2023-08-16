@@ -155,11 +155,11 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 
-# setup /var/run/postgresql for use with runner
+# setup /var/run/postgresql
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 # create tmp directory for runner user
-RUN mkdir -m 1777 /__w
+RUN mkdir -p /__w && chown -R runner:runner /__w && chmod 2777 /__w
 
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /

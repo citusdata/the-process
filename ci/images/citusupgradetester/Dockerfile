@@ -96,7 +96,7 @@ FROM base
 RUN chown -R runner /usr/lib/postgresql/ /usr/include/postgresql/ /usr/share/postgresql/
 
 # create tmp directory for runner user
-RUN mkdir -m 1777 /__w
+RUN mkdir -p /__w && chown -R runner:runner /__w && chmod 2777 /__w
 
 COPY ./files/etc/requirements.txt /tmp/etc/
 RUN pip3 install -Ir /tmp/etc/requirements.txt

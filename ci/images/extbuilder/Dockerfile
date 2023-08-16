@@ -54,7 +54,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
  && rm -rf /var/lib/apt/lists/*
 
 # create tmp directory for runner user
-RUN mkdir -m 1777 /__w
+RUN mkdir -p /__w && chown -R runner:runner /__w && chmod 2777 /__w
 
 USER runner
 WORKDIR /home/runner

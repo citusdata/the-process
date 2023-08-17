@@ -151,7 +151,7 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
         apt-get install -y --no-install-recommends --allow-downgrades postgresql-${PG_MAJOR}-wal2json; \
     fi \
 # clear apt cache
-&& rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

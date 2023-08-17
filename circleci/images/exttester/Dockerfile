@@ -145,7 +145,11 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json \
+# wal2json not available yet for PG16
+ && if [ "$PG_MAJOR" != "16" ]; \
+    then \
+        apt-get install -y --no-install-recommends --allow-downgrades postgresql-${PG_MAJOR}-wal2json; \
+    fi \
 # clear apt cache
  && rm -rf /var/lib/apt/lists/*
 

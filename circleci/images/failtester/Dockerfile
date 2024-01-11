@@ -21,6 +21,7 @@ RUN apt-get update \
     libcurl4 \
     libcurl4-openssl-dev \
     libicu-dev \
+    libkrb5-dev \
     liblz4-1 \
     liblz4-dev \
     libreadline-dev \

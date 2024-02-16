@@ -76,6 +76,6 @@ RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgres
 COPY ./files/etc/requirements.txt /tmp/etc/
 
 # this image is only used for testing purposes, so should be okay to overwrite system-managed packages
-RUN pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages
+RUN pip3 install -Ir /tmp/etc/requirements.txt --user
 
 WORKDIR /home/circleci

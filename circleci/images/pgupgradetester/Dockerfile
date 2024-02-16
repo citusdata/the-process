@@ -74,5 +74,4 @@ RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /e
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-
 RUN pip3 install -Ir /tmp/etc/requirements.txt

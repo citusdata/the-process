@@ -97,7 +97,7 @@ RUN chown -R circleci /usr/lib/postgresql/ /usr/include/postgresql/ /usr/share/p
 
 COPY ./files/etc/requirements.txt /tmp/etc/
 
-RUN pip3 install -Ir /tmp/etc/requirements.txt --user
+RUN pip3 install -Ir /tmp/etc/requirements.txt
 
 WORKDIR /home/circleci
 

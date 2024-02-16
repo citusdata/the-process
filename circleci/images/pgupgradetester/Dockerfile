@@ -75,4 +75,4 @@ RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgres
 
 COPY ./files/etc/requirements.txt /tmp/etc/
 
-RUN pip3 install -Ir /tmp/etc/requirements.txt --user
+RUN pip3 install -Ir /tmp/etc/requirements.txt

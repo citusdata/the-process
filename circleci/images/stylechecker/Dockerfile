@@ -38,5 +38,6 @@ RUN apk add --no-cache --virtual installdeps \
   && make install \
   && cd ../.. \
   && rm -rf uncrustify-uncrustify-0.68.1/ \
-  && pip3 install -Ir /tmp/etc/requirements.txt \
+  # this image is only used for testing purposes, so should be okay to overwrite system-managed packages
+  && pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages \
   && apk del installdeps

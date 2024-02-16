@@ -96,7 +96,9 @@ FROM base
 RUN chown -R circleci /usr/lib/postgresql/ /usr/include/postgresql/ /usr/share/postgresql/
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-RUN pip3 install -Ir /tmp/etc/requirements.txt
+
+# this image is only used for testing purposes, so should be okay to overwrite system-managed packages
+RUN pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages
 
 WORKDIR /home/circleci
 

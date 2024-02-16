@@ -74,6 +74,8 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-RUN pip3 install -Ir /tmp/etc/requirements.txt
+
+# this image is only used for testing purposes, so should be okay to overwrite system-managed packages
+RUN pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages
 
 WORKDIR /home/circleci

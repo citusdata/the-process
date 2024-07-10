@@ -6,6 +6,8 @@ COPY ./files/etc/requirements.txt /tmp/etc/
 # openssh is needed in the image for CircleCI to pull the repo over ssh
 RUN <<'EOF'
 # install dependencies
+set -eux
+
 apk add --no-cache --virtual installdeps \
       curl \
       make \
@@ -32,7 +34,7 @@ curl -L "https://github.com/citusdata/tools/archive/v${TOOLS_VERSION}.tar.gz" | 
 cd "tools-${TOOLS_VERSION}"
 make uncrustify/.install
 cd ..
-rm -rf "citus-${VERSION}" "v${TOOLS_VERSION}.tar.gz"
+rm -rf "v${TOOLS_VERSION}.tar.gz"
 
 curl -L "https://github.com/uncrustify/uncrustify/archive/uncrustify-0.68.1.tar.gz" | tar xz
 cd uncrustify-uncrustify-0.68.1/

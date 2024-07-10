@@ -5,6 +5,7 @@ RUN useradd -ms /bin/bash circleci
 
 RUN <<'EOF'
 # install dependencies
+set -eux
 apt-get update
 
 apt-get install -y --no-install-recommends \
@@ -43,6 +44,7 @@ ENV PG_MAJOR=$PG_MAJOR
 
 RUN <<'EOF'
 # install postgres ecosystem for pg version: $PG_VERSION
+set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -

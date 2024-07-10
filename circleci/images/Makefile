@@ -1,5 +1,5 @@
 # config variable
-DOCKER_REPO ?= citus
+DOCKER_REPO ?= ghcr.io/citusdata
 SHA_SUFFIX := $(shell git rev-parse --short HEAD)
 
 # auto generated variables

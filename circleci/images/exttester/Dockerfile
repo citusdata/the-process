@@ -2,9 +2,13 @@
 # we use this builder to build the isolation tester from a specific version
 FROM buildpack-deps:bullseye AS dev-tools-builder
 
-RUN apt-get update \
+RUN <<'EOF'
 # install dependencies
- && apt-get install -y --no-install-recommends \
+set -eux
+
+apt-get update
+
+apt-get install -y --no-install-recommends \
     apt-transport-https \
     autoconf \
     build-essential \
@@ -28,8 +32,10 @@ RUN apt-get update \
     locales \
     make \
     perl \
+
 # clear apt cache
- && rm -rf /var/lib/apt/lists/*
+rm -rf /var/lib/apt/lists/*
+EOF
 
 ARG PG_VERSION
 ARG PG_VERSION_CLEAN
@@ -43,11 +49,15 @@ RUN tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
 # apply optional patches that might be required for a successful testsuite
 WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/
 COPY patches/ patches/
-SHELL ["/bin/bash", "-c"]
-RUN if [ -d "patches/${PG_VERSION_CLEAN}/" ]; \
-    then \
-        git apply patches/${PG_VERSION_CLEAN}/*.patch; \
-    fi;
+RUN <<'EOF'
+# apply postgres patches
+
+set -eux
+if [ -d "patches/${PG_VERSION_CLEAN}/" ];
+then
+    git apply patches/${PG_VERSION_CLEAN}/*.patch;
+fi;
+EOF
 
 WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
@@ -63,9 +73,9 @@ ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
 
 COPY --from=dev-tools-builder \
-	/build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/pg_isolation_regress \
-	/build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/isolationtester \
-	build/postgresql-${PG_MAJOR}/build/src/test/isolation/
+  /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/pg_isolation_regress \
+  /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/isolationtester \
+  build/postgresql-${PG_MAJOR}/build/src/test/isolation/
 
 # copy regress files in multiple layers as we only need a few
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/regress/regress.so usr/lib/postgresql/${PG_MAJOR}/lib/
@@ -77,9 +87,13 @@ FROM buildpack-deps:bullseye
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
 
-RUN apt-get update \
+RUN <<'EOF'
 # install dependencies
- && apt-get install -y --no-install-recommends \
+set -eux
+
+apt-get update
+
+apt-get install -y --no-install-recommends \
     apt-transport-https \
     autoconf \
     build-essential \
@@ -106,8 +120,10 @@ RUN apt-get update \
     locales \
     make \
     perl \
+
 # clear apt cache
- && rm -rf /var/lib/apt/lists/*
+rm -rf /var/lib/apt/lists/*
+EOF
 
 # install rust
 RUN curl --proto '=https' --tlsv1.2 --silent --show-error https://sh.rustup.rs | sh -s -- -y
@@ -123,31 +139,39 @@ RUN locale-gen
 # Add codeclimate
 RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-test-reporter && chmod +x /usr/local/bin/cc-test-reporter
 
-# add postgres signing key
-RUN curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-
 ARG PG_VERSION
 ARG PG_MAJOR
 ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 
-# add postgres repository
-RUN echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list \
- && echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list \
- && apt-get update \
+RUN <<'EOF'
+# install postgres ecosystem for pg version: $PG_VERSION
+set -eux
+
+# install key and repositories
+curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
+echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
+
+apt-get update
+
 # infer the pgdgversion of postgres based on the $PG_VERSION
- && pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 ) \
- && apt-get install -y --no-install-recommends --allow-downgrades \
+pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
+
+apt-get install -y --no-install-recommends --allow-downgrades \
     libdbi-perl \
     libdbd-pg-perl \
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
+    postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-wal2json \
-# clear apt cache
- && rm -rf /var/lib/apt/lists/*
+
+    # clear apt cache
+rm -rf /var/lib/apt/lists/*
+EOF
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

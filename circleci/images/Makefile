@@ -18,8 +18,8 @@ STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
 # we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
 CITUS_UPGRADE_PG_VERSIONS=$(shell head -n1 PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
-# 10.2.0 is the oldest version supporting PG14, whereas 11.3.0 is for upgrade_pg_dist_cleanup tests
-CITUS_UPGRADE_VERSIONS=v10.2.0 v11.3.0
+# 11.1.0 is the oldest version supporting PG15, whereas 11.3.0 is for upgrade_pg_dist_cleanup tests
+CITUS_UPGRADE_VERSIONS=v11.1.0 v11.3.0
 
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets

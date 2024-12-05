@@ -56,7 +56,7 @@ apt-get update
 # infer the pgdgversion of postgres based on the $PG_VERSION
 pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
 
-apt-get install -y --no-install-recommends --allow-downgrades \
+apt-get install -y --no-install-recommends \
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \

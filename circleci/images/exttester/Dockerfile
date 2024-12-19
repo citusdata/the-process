@@ -178,7 +178,7 @@ rm -rf /var/lib/apt/lists/*
 EOF
 
 RUN <<'EOF'
-DEBIAN_FRONTEND=noninteractive apt purge -y --force-yes \
+yes | apt purge -y --force-yes \
     libpq5 \
 
 # infer the pgdgversion of postgres based on the $PG_VERSION

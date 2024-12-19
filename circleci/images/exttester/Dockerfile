@@ -178,10 +178,8 @@ rm -rf /var/lib/apt/lists/*
 EOF
 
 RUN <<'EOF'
-DEBIAN_FRONTEND=noninteractive apt purge -y \
+DEBIAN_FRONTEND=noninteractive apt purge -y --force-yes \
     libpq5 \
-
-apt-get update
 
 # infer the pgdgversion of postgres based on the $PG_VERSION
 pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )

@@ -171,12 +171,7 @@ apt-get install -y --no-install-recommends \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-
-# wal2json not available yet for PG17
-if [ "$PG_MAJOR" != "17" ];
-then
-    apt-get install -y --no-install-recommends --allow-downgrades postgresql-${PG_MAJOR}-wal2json;
-fi;
+    postgresql-${PG_MAJOR}-wal2json \
 
     # clear apt cache
 rm -rf /var/lib/apt/lists/*

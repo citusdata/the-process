@@ -32,6 +32,8 @@ apt-get install -y --no-install-recommends \
     locales \
     make \
     perl \
+    bison \
+    flex \
 
 # clear apt cache
 rm -rf /var/lib/apt/lists/*
@@ -120,6 +122,8 @@ apt-get install -y --no-install-recommends \
     locales \
     make \
     perl \
+    bison \
+    flex \
 
 # clear apt cache
 rm -rf /var/lib/apt/lists/*

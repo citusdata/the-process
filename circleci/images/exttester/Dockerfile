@@ -1,6 +1,14 @@
+FROM buildpack-deps:bullseye AS bullseye-no-libpq
+
+RUN <<'EOF'
+    rm /usr/lib/x86_64-linux-gnu/libpq.so*
+    
+    DEBIAN_FRONTEND=noninteractive apt purge -y libpq5
+EOF
+
 # postgres doesn't ship their isolation tester in the server-dev images
 # we use this builder to build the isolation tester from a specific version
-FROM buildpack-deps:bullseye AS dev-tools-builder
+FROM bullseye-no-libpq AS dev-tools-builder
 
 RUN <<'EOF'
 # install dependencies
@@ -65,7 +73,7 @@ WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
 RUN make -sj8
 
-FROM buildpack-deps:bullseye AS dev-tools-collection
+FROM bullseye-no-libpq AS dev-tools-collection
 
 WORKDIR /collect
 
@@ -84,7 +92,7 @@ COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/te
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
 
-FROM buildpack-deps:bullseye
+FROM bullseye-no-libpq
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -156,9 +164,6 @@ set -eux
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
 echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
-
-DEBIAN_FRONTEND=noninteractive apt purge -y \
-    libpq5 \
 
 apt-get update
 

@@ -3,7 +3,7 @@ FROM buildpack-deps:bullseye AS bullseye-no-libpq
 RUN <<'EOF'
     rm /usr/lib/x86_64-linux-gnu/libpq.so*
     
-    DEBIAN_FRONTEND=noninteractive apt purge -y libpq5
+    DEBIAN_FRONTEND=noninteractive apt purge -y libpq-dev libpq5
 EOF
 
 # postgres doesn't ship their isolation tester in the server-dev images

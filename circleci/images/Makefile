@@ -29,6 +29,7 @@ define make-image-targets
 
 build-extbuilder-$1:
 	docker build \
+		--load \
 		extbuilder/ \
 		-f extbuilder/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
@@ -48,6 +49,7 @@ push-extbuilder-all:: push-extbuilder-$1
 
 build-exttester-$1:
 	docker build \
+		--load \
 		exttester/ \
 		-f exttester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
@@ -68,6 +70,7 @@ push-exttester-all:: push-exttester-$1
 
 build-failtester-$1:
 	docker build \
+		--load \
 		failtester/ \
 		-f failtester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
@@ -96,6 +99,7 @@ define make-citus-upgrage-targets
 
 build-citusupgradetester-$1:
 	docker build \
+		--load \
 		citusupgradetester/ \
 		-f citusupgradetester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
@@ -118,6 +122,7 @@ $(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-
 # pg upgrade image is 1 global image
 build-pgupgradetester:
 	docker build \
+		--load \
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
@@ -133,6 +138,7 @@ push-all:: push-pgupgradetester-all
 # style checker image is 1 global image
 build-stylechecker:
 	docker build \
+		--load \
 		stylechecker/ \
 		-f stylechecker/Dockerfile \
 		--build-arg=TOOLS_VERSION="${STYLE_CHECKER_TOOLS_VERSION}" \

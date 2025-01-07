@@ -1,5 +1,5 @@
 # we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
-FROM python:3.9.7-slim-bookworm
+FROM python:3.9.21-slim-bookworm
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci

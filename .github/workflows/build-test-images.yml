@@ -49,10 +49,6 @@ jobs:
         with:
           version: v0.18.0
 
-      - name: docker buildx remove default
-        run: |
-          docker buildx rm default
-
       - name: list buildx version (again)
         run: |
           docker buildx version
@@ -98,10 +94,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           version: v0.18.0
-
-      - name: docker buildx remove default
-        run: |
-          docker buildx rm default
 
       - name: list buildx version (again)
         run: |

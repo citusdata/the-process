@@ -95,6 +95,7 @@ jobs:
         id: buildx
         with:
           version: v0.18.0
+          driver: docker
 
       - name: list buildx version (again)
         run: |

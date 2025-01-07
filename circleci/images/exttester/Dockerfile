@@ -2,6 +2,8 @@
 # we use this builder to build the isolation tester from a specific version
 FROM buildpack-deps:bookworm AS dev-tools-builder
 
+RUN apt purge -y libpq5
+
 RUN <<'EOF'
 # install dependencies
 set -eux

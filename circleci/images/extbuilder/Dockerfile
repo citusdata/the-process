@@ -3,6 +3,8 @@ FROM buildpack-deps:bookworm
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
 
+RUN apt purge -y libpq5
+
 RUN <<'EOF'
 # install dependencies
 set -eux

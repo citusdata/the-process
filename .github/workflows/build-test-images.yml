@@ -66,7 +66,7 @@ jobs:
       - name: Build & Push all dev images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          BUILDX_BUILDER=${{ steps.buildx.outputs.name }} make push-${{ matrix.command }}-${{ matrix.pgversion }}
 
   build_dev_images_shared:
     if: github.ref_name != 'master'
@@ -95,7 +95,6 @@ jobs:
         id: buildx
         with:
           version: v0.18.0
-          install: true
 
       - name: list buildx version (again)
         run: |

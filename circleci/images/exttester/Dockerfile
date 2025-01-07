@@ -177,13 +177,29 @@ apt-get install -y --no-install-recommends --allow-downgrades \
 rm -rf /var/lib/apt/lists/*
 EOF
 
+# debug
+RUN echo "DEBUG-2"
+RUN ls -al /usr/lib/x86_64-linux-gnu/libpq.so*
+
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
+# debug
+RUN echo "DEBUG-3"
+RUN ls -al /usr/lib/x86_64-linux-gnu/libpq.so*
+
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
 
+# debug
+RUN echo "DEBUG-4"
+RUN ls -al /usr/lib/x86_64-linux-gnu/libpq.so*
+
 WORKDIR /home/circleci
+
+# debug
+RUN echo "DEBUG-5"
+RUN ls -al /usr/lib/x86_64-linux-gnu/libpq.so*

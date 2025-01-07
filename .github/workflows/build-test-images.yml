@@ -49,7 +49,7 @@ jobs:
       - name: Build & Push all dev images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          DOCKER_BUILDKIT=0 make push-${{ matrix.command }}-${{ matrix.pgversion }}
 
   build_dev_images_shared:
     if: github.ref_name != 'master'
@@ -78,7 +78,7 @@ jobs:
       - name: Build & Push all dev images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-all
+          DOCKER_BUILDKIT=0 make push-${{ matrix.command }}-all
 
 
   build_release_images:
@@ -102,4 +102,4 @@ jobs:
       - name: Build & Push all live images
         run: |
           cd circleci/images
-          RELEASE=1 make push-all
+          DOCKER_BUILDKIT=0 RELEASE=1 make push-all

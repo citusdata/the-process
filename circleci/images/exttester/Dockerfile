@@ -183,6 +183,10 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
+# fix symlink
+RUN ln -fns /usr/lib/x86_64-linux-gnu/libpq.so.5.14 /usr/lib/x86_64-linux-gnu/libpq.so.5
+RUN ln -fns /usr/lib/x86_64-linux-gnu/libpq.so.5.14 /usr/lib/x86_64-linux-gnu/libpq.so
+
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
 

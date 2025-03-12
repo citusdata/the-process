@@ -164,7 +164,7 @@ pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep 
 
 apt-get install -y --no-install-recommends --allow-downgrades \
     libdbi-perl \
-    libdbd-pg-perl \
+    libdbd-pg-perl=3.16.3-1.pgdg110+1 \
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \

@@ -51,10 +51,19 @@ curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_
 echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
+# # bring in the 18 devel/beta packages
+echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg-testing main 18" >> /etc/apt/sources.list.d/pgdg-testing.list
+
 apt-get update
 
 # infer the pgdgversion of postgres based on the $PG_VERSION
-pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
+#pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
+
+pgdg_version=$(
+    apt-cache policy postgresql-server-dev-${PG_MAJOR} \
+        | awk '/Candidate:/ { print $2; exit }'
+)
+echo "⟵ pgdg_version = »${pgdg_version}«"
 
 apt-get install -y --no-install-recommends --allow-downgrades \
     libpq-dev=${pgdg_version} \

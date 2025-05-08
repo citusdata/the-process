@@ -87,7 +87,8 @@ push-failtester-all:: push-failtester-$1
 endef
 
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
-$(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+#$(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+$(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element)|awk -F'[^0-9]*' '/[0-9]/{print$$1}'),$(subst ~,,$(element)))))
 
 define make-citus-upgrage-targets
 # $1 = PG_VERSION

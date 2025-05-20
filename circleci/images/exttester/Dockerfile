@@ -178,6 +178,9 @@ apt-get install -y --no-install-recommends --allow-downgrades \
 rm -rf /var/lib/apt/lists/*
 EOF
 
+# ---------- copy helper binaries ----------
+COPY --from=dev-tools-collection /collect/ /
+
 # now do the symlink (outside the heredoc!) in its own layer
 RUN ln -s /usr/lib/x86_64-linux-gnu/libpq.so.5 \
            /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5 && \

@@ -24,6 +24,7 @@ apt-get install -y --no-install-recommends \
     lcov \
     libcurl4 \
     libcurl4-openssl-dev \
+    libpq5 \
     libicu-dev \
     liblz4-1 \
     liblz4-dev \

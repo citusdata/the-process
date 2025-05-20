@@ -20,6 +20,7 @@ apt-get install -y --no-install-recommends \
     gosu \
     libcurl4 \
     libcurl4-openssl-dev \
+    libpq5 \
     libicu-dev \
     liblz4-1 \
     liblz4-dev \
@@ -110,6 +111,7 @@ apt-get install -y --no-install-recommends \
     lcov \
     libcurl4 \
     libcurl4-openssl-dev \
+    libpq5 \
     libicu-dev \
     liblz4-1 \
     liblz4-dev \
@@ -167,7 +169,7 @@ pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep 
 
 apt-get install -y --no-install-recommends --allow-downgrades \
     libpq-dev=${pgdg_version} \
-    libpq5=${pgdg_version} \
+#   libpq5=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \

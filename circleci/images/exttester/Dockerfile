@@ -174,22 +174,9 @@ apt-get install -y --no-install-recommends --allow-downgrades \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-wal2json \
 
-# --------------------------------------------------------------------
-# libpq lives in /usr/lib/x86_64-linux-gnu, but every PostgreSQL binary
-# looks first in $ORIGIN/../lib (→ /usr/lib/postgresql/${PG_MAJOR}/lib).
-# Drop one symlink there and refresh the loader cache so initdb/psql/etc.
-# can start without LD_LIBRARY_PATH.
-# --------------------------------------------------------------------
-
     # clear apt cache
-rm -rf /var/lib/apt/lists/* && \
-
-ln -s /usr/lib/x86_64-linux-gnu/libpq.so.5 \
-      /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5 && \
-echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf && \
-ldconfig
+rm -rf /var/lib/apt/lists/*
 EOF
-
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

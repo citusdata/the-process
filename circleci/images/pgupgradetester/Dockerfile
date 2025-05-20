@@ -91,6 +91,12 @@ apt-get install -y --no-install-recommends --allow-downgrades \
 rm -rf /var/lib/apt/lists/*
 EOF
 
+# now do the symlink (outside the heredoc!) in its own layer
+RUN ln -s /usr/lib/x86_64-linux-gnu/libpq.so.5 \
+           /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5 && \
+    echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf && \
+    ldconfig
+
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 

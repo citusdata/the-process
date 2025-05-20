@@ -47,7 +47,7 @@ push-all:: push-extbuilder-$1
 push-extbuilder-all:: push-extbuilder-$1
 
 build-exttester-$1:
-	docker build \
+	docker build  --no-cache \
 		exttester/ \
 		-f exttester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \

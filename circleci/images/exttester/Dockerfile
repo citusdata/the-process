@@ -190,6 +190,7 @@ RUN apt-get update && \
            /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5 && \
     echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf && \
     ldconfig
+    ENV LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libpq.so.5"
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

@@ -178,19 +178,6 @@ apt-get install -y --no-install-recommends --allow-downgrades \
 rm -rf /var/lib/apt/lists/*
 EOF
 
-# ---------- copy helper binaries ----------
-COPY --from=dev-tools-collection /collect/ /
-
-# now do the symlink (outside the heredoc!) in its own layer
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends --reinstall libpq5 && \
-    rm -rf /var/lib/apt/lists/* && \
-# 4. satisfy RUNPATH
-    ln -sf /usr/lib/x86_64-linux-gnu/libpq.so.5 \
-           /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5 && \
-    echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf && \
-    ldconfig
-    ENV LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libpq.so.5"
 
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH

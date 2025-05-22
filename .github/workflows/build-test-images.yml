@@ -23,6 +23,8 @@ jobs:
     if: github.ref_name != 'master'
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     needs:
       - prepare_pgversion_matrix
     strategy:
@@ -55,6 +57,8 @@ jobs:
     if: github.ref_name != 'master'
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +89,8 @@ jobs:
     if: github.ref_name == 'master'
     name: push-test-images-for-release
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     strategy:
       fail-fast: false
 

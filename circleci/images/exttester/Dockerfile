@@ -133,8 +133,8 @@ EOF
 RUN curl --proto '=https' --tlsv1.2 --silent --show-error https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# perl's lib IPC::Run is required to run tap tests
-RUN cpanm install IPC::Run
+# install the Perl modules needed for all TAP-based tests (CDC, isolation, etc.)
+RUN cpanm --notest IPC::Run DBI DBD::Pg
 
 # make special locales available
 COPY locale.gen /etc/locale.gen

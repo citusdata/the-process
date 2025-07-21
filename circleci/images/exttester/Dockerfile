@@ -175,7 +175,6 @@ apt-get install -y --no-install-recommends --allow-downgrades \
 rm -rf /var/lib/apt/lists/*
 EOF
 
-
 # add postgress to the path
 ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 

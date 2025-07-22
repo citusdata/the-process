@@ -89,9 +89,6 @@ FROM buildpack-deps:bullseye
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
 
-# bring in the built Postgres libs so pg_regress_multi’s LD_LIBRARY_PATH has something to find
-COPY --from=dev-tools-builder /build /build
-
 RUN <<'EOF'
 # install dependencies
 set -eux
@@ -186,24 +183,7 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
-# --------------------------------------------------------------------
-# The COPY above can white‑out /usr/lib/x86_64-linux-gnu when BuildKit
-# is active, removing libpq.so.* that was installed earlier.  We
-# (re)install libpq5, recreate the helper symlink for PG ≤ 16, refresh
-# the loader cache, and preload the client library so Citus  never
-# complains about symbol interposition.
-# --------------------------------------------------------------------
-ARG PG_MAJOR
-RUN set -eux; \
-    # 2.  Satisfy RUNPATH for PG 15/16 (harmless for ≥17)
-    ln -sf /usr/lib/x86_64-linux-gnu/libpq.so.5 \
-           /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5; \
-    \
-    # 3.  Refresh dynamic‑linker cache
-    echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf; \
-    ldconfig
-
-# 4.  Make sure the backend and Citus load the *same* libpq object
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libpq.so.5
+# copy the collected files from the collection container at once into the final container
+COPY --from=dev-tools-collection /collect/ /
 
 WORKDIR /home/circleci

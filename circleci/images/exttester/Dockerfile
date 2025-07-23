@@ -187,9 +187,14 @@ RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgres
 COPY --from=dev-tools-collection /collect/ /
 
 ARG PG_MAJOR
+# fix broken system symlinks for libpq
 RUN set -eux; \
-    ln -sf /usr/lib/x86_64-linux-gnu/libpq.so.5 \
-           /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5; \
+    cd /usr/lib/x86_64-linux-gnu; \
+    # pick the one real libpq.so.5.* file:
+    tgt=$(ls -1 libpq.so.5.* 2>/dev/null | head -n1) || exit 1; \
+    ln -sf "${tgt}" libpq.so.5; \
+    ln -sf "${tgt}" libpq.so; \
+    # teach ld.so about it
     echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf; \
     ldconfig
 

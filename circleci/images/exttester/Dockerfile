@@ -186,4 +186,11 @@ RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgres
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
 
+ARG PG_MAJOR
+RUN set -eux; \
+    ln -sf /usr/lib/x86_64-linux-gnu/libpq.so.5 \
+           /usr/lib/postgresql/${PG_MAJOR}/lib/libpq.so.5; \
+    echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf; \
+    ldconfig
+
 WORKDIR /home/circleci

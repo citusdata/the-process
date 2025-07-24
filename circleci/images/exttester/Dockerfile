@@ -75,6 +75,10 @@ ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
 
 COPY --from=dev-tools-builder \
+     /build/postgresql-${PG_VERSION_CLEAN}/build/lib/*.so \
+     /build/postgresql-${PG_VERSION_CLEAN}/build/lib/
+     
+COPY --from=dev-tools-builder \
   /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/pg_isolation_regress \
   /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/isolationtester \
   build/postgresql-${PG_MAJOR}/build/src/test/isolation/

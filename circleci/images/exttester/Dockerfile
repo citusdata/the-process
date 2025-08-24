@@ -75,6 +75,10 @@ ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
 
 COPY --from=dev-tools-builder \
+     /build/postgresql-${PG_MAJOR}/build/lib/*.so \
+     /build/postgresql-${PG_MAJOR}/build/lib/
+     
+COPY --from=dev-tools-builder \
   /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/pg_isolation_regress \
   /build/postgresql-${PG_VERSION_CLEAN}/build/src/test/isolation/isolationtester \
   build/postgresql-${PG_MAJOR}/build/src/test/isolation/
@@ -185,5 +189,17 @@ RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgres
 
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
+
+ARG PG_MAJOR
+# fix broken system symlinks for libpq
+RUN set -eux; \
+    cd /usr/lib/x86_64-linux-gnu; \
+    # pick the one real libpq.so.5.* file:
+    tgt=$(ls -1 libpq.so.5.* 2>/dev/null | head -n1) || exit 1; \
+    ln -sf "${tgt}" libpq.so.5; \
+    ln -sf "${tgt}" libpq.so; \
+    # teach ld.so about it
+    echo "/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/libpq.conf; \
+    ldconfig
 
 WORKDIR /home/circleci

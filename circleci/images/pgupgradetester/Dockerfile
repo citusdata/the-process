@@ -40,9 +40,6 @@ apt-get install -y --no-install-recommends \
 rm -rf /var/lib/apt/lists/*
 EOF
 
-# Add codeclimate
-RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-test-reporter && chmod +x /usr/local/bin/cc-test-reporter
-
 ARG PG_VERSIONS
 ENV PG_VERSIONS=$PG_VERSIONS
 

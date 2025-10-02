@@ -44,9 +44,6 @@ EOF
 COPY locale.gen /etc/locale.gen
 RUN locale-gen
 
-# Add codeclimate
-RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-test-reporter && chmod +x /usr/local/bin/cc-test-reporter
-
 ARG PG_VERSION
 ARG PG_MAJOR
 ENV PG_VERSION=$PG_VERSION

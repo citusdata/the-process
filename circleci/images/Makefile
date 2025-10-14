@@ -16,16 +16,21 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
-# we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
-CITUS_UPGRADE_PG_VERSIONS=$(shell head -n1 PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
+# Upgrade tests for the previous 2 Citus major versions
+CITUS_UPGRADE_PG_VERSIONS=$(shell head -n2 PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # 11.1.0 is the oldest version supporting PG15, whereas 11.3.0 is for upgrade_pg_dist_cleanup tests 
-CITUS_UPGRADE_VERSIONS=v11.1.0 v11.3.0
+# 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
+CITUS_UPGRADE_VERSIONS_15=v11.1.0 v11.3.0 v12.1.10
+CITUS_UPGRADE_VERSIONS_16=v12.1.10
+
+# Function to get Citus versions for a specific PG major version
+get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
 
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-extbuilder-$1:
 	docker build \
@@ -92,7 +97,7 @@ $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(s
 define make-citus-upgrage-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-citusupgradetester-$1:
 	docker build \
@@ -100,7 +105,7 @@ build-citusupgradetester-$1:
 		-f citusupgradetester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
-		--build-arg=CITUS_VERSIONS="${CITUS_UPGRADE_VERSIONS}"\
+		--build-arg=CITUS_VERSIONS="$(call get_citus_versions,$2)" \
 		--tag=${DOCKER_REPO}/citusupgradetester:$3${TAG_SUFFIX}
 
 build-all:: build-citusupgradetester-$1

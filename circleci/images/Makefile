@@ -16,12 +16,14 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
-# Upgrade tests for the previous 2 Citus major versions
-CITUS_UPGRADE_PG_VERSIONS=$(shell head -n2 PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+# Upgrade tests for the PG major versions from PG_VERSIONS file 
+CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # 11.1.0 is the oldest version supporting PG15, whereas 11.3.0 is for upgrade_pg_dist_cleanup tests 
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
 CITUS_UPGRADE_VERSIONS_15=v11.1.0 v11.3.0 v12.1.10
 CITUS_UPGRADE_VERSIONS_16=v12.1.10
+# Latest minor version of Citus 13
+CITUS_UPGRADE_VERSIONS_17=v13.2.0
 
 # Function to get Citus versions for a specific PG major version
 get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
@@ -94,7 +96,7 @@ endef
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
 $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
-define make-citus-upgrage-targets
+define make-citus-upgrade-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
 # $3 = PG_VERSION_CLEAN
@@ -117,7 +119,7 @@ push-citusupgradetester-$1: build-citusupgradetester-$1
 push-all:: push-citusupgradetester-$1
 push-citusupgradetester-all:: push-citusupgradetester-$1
 endef
-$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrade-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
 
 # pg upgrade image is 1 global image

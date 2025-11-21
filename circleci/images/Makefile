@@ -17,11 +17,11 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
 # Upgrade tests for the PG major versions from PG_VERSIONS file 
-CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
-# 11.1.0 is the oldest version supporting PG15, whereas 11.3.0 is for upgrade_pg_dist_cleanup tests 
+CITUS_UPGRADE_PG_VERSIONS=$(shell tail -n2 PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
-CITUS_UPGRADE_VERSIONS_15=v11.1.0 v11.3.0 v12.1.10
 CITUS_UPGRADE_VERSIONS_16=v12.1.10
+
 # Latest minor version of Citus 13
 CITUS_UPGRADE_VERSIONS_17=v13.2.0
 

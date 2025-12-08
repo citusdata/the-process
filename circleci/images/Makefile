@@ -14,7 +14,7 @@ PG_VERSIONS=$(shell cat PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
-STYLE_CHECKER_TOOLS_VERSION=0.8.18
+STYLE_CHECKER_TOOLS_VERSION=test
 
 # Upgrade tests for the PG major versions from PG_VERSIONS file 
 CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')

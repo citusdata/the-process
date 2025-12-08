@@ -31,7 +31,7 @@ apk add --no-cache \
       py3-packaging \
 
 curl -L "https://github.com/citusdata/tools/archive/v${TOOLS_VERSION}.tar.gz" | tar xz
-cd "tools-${TOOLS_VERSION}"
+cd "tools-v${TOOLS_VERSION}"
 make uncrustify/.install
 cd ..
 rm -rf "v${TOOLS_VERSION}.tar.gz"

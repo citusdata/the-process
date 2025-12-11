@@ -36,15 +36,15 @@ make uncrustify/.install
 cd ..
 rm -rf "v${TOOLS_VERSION}.tar.gz"
 
-curl -L "https://github.com/uncrustify/uncrustify/archive/uncrustify-0.68.1.tar.gz" | tar xz
-cd uncrustify-uncrustify-0.68.1/
+curl -L "https://github.com/uncrustify/uncrustify/archive/uncrustify-0.82.0.tar.gz" | tar xz
+cd uncrustify-uncrustify-0.82.0/
 mkdir build
 cd build
 cmake ..
 make -j5
 make install
 cd ../..
-rm -rf uncrustify-uncrustify-0.68.1/
+rm -rf uncrustify-uncrustify-0.82.0/
 
 # this image is only used for testing purposes, so should be okay to overwrite system-managed packages
 pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages

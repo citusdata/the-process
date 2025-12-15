@@ -17,7 +17,7 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 STYLE_CHECKER_TOOLS_VERSION=0.8.33
 
 # Upgrade tests for the PG major versions from PG_VERSIONS file 
-CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+CITUS_UPGRADE_PG_VERSIONS=$(shell head -n2 PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
 CITUS_UPGRADE_VERSIONS_16=v12.1.10
 # Latest minor version of Citus 13

@@ -50,7 +50,7 @@ RUN tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
 
 # apply optional patches that might be required for a successful testsuite
 WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/
-COPY patches/ patches/
+COPY exttester/patches/ patches/
 RUN <<'EOF'
 # apply postgres patches
 
@@ -137,7 +137,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cpanm install IPC::Run
 
 # make special locales available
-COPY locale.gen /etc/locale.gen
+COPY exttester/locale.gen /etc/locale.gen
 RUN locale-gen
 
 ARG PG_VERSION

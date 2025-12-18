@@ -189,7 +189,7 @@ ENV CITUS_VERSIONS=$CITUS_VERSION
 
 WORKDIR /build-citus/
 COPY citusupgradetester/files/sbin/build-citus .
-RUN ./build-citus
+RUN if [ -n "${CITUS_VERSION}" ]; then ./build-citus; else echo "Skipping citus build - CITUS_VERSION not set"; fi
 
 
 FROM setup-environment
@@ -205,10 +205,17 @@ ENV PG_VERSION=$PG_VERSION
 COPY --from=dev-tools-collection /collect/ /
 
 # copy citus so files from the build-citus stage
-WORKDIR /opt/citus-versions/${CITUS_VERSION}
-COPY --from=build-citus /build-citus/so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar .
-RUN tar xvf so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar
-# cleanup build artifacts
-RUN rm so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar
+COPY --from=build-citus /build-citus/ /tmp/build-citus/
+
+# Extract conditionally in shell
+RUN <<'EOF'
+set -eux
+if [ -n "${CITUS_VERSION}" ] && [ -f "/tmp/build-citus/so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar" ]; then
+    mkdir -p /opt/citus-versions/${CITUS_VERSION}
+    cd /opt/citus-versions/${CITUS_VERSION}
+    tar xvf /tmp/build-citus/so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar
+fi
+EOF
+RUN rm -rf /tmp/build-citus/
     
 WORKDIR /home/circleci

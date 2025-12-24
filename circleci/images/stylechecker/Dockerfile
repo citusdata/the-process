@@ -31,13 +31,13 @@ apk add --no-cache \
       python3 \
       py3-packaging \
 
-curl -L "https://github.com/citusdata/tools/archive/v${TOOLS_VERSION}.tar.gz" | tar xz
+curl -fsSL "https://codeload.github.com/citusdata/tools/tar.gz/v${TOOLS_VERSION}" | tar xz
 cd "tools-${TOOLS_VERSION}"
 make uncrustify/.install
 cd ..
 rm -rf "v${TOOLS_VERSION}.tar.gz"
 
-curl -L "https://github.com/uncrustify/uncrustify/archive/uncrustify-0.82.0.tar.gz" | tar xz
+curl -fsSL "https://codeload.github.com/uncrustify/uncrustify/tar.gz/uncrustify-0.82.0" | tar xz
 cd uncrustify-uncrustify-0.82.0/
 mkdir build
 cd build

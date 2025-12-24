@@ -16,6 +16,7 @@ apk add --no-cache --virtual installdeps \
       gcc \
       gzip \
       musl-dev \
+      openssl-dev \
       py3-pip \
       python3-dev \
       tar \

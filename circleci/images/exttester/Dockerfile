@@ -50,7 +50,7 @@ RUN tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
 
 # apply optional patches that might be required for a successful testsuite
 WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/
-COPY patches/ patches/
+COPY exttester/patches/ patches/
 RUN <<'EOF'
 # apply postgres patches
 
@@ -84,7 +84,7 @@ COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/te
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
 
-FROM buildpack-deps:bullseye
+FROM buildpack-deps:bullseye AS setup-environment
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -137,13 +137,15 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cpanm install IPC::Run
 
 # make special locales available
-COPY locale.gen /etc/locale.gen
+COPY exttester/locale.gen /etc/locale.gen
 RUN locale-gen
 
 ARG PG_VERSION
 ARG PG_MAJOR
+ARG CITUS_VERSION
 ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
+ENV CITUS_VERSION=$CITUS_VERSION
 
 RUN <<'EOF'
 # install postgres ecosystem for pg version: $PG_VERSION
@@ -180,7 +182,40 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 # setup /var/run/postgresql for use with circleci
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
+
+FROM setup-environment AS build-citus
+
+ENV CITUS_VERSIONS=$CITUS_VERSION
+
+WORKDIR /build-citus/
+COPY citusupgradetester/files/sbin/build-citus .
+RUN if [ -n "${CITUS_VERSION}" ]; then ./build-citus; else echo "Skipping citus build - CITUS_VERSION not set"; fi
+
+
+FROM setup-environment
+
+ARG CITUS_VERSION
+ARG PG_VERSION
+ARG PG_MAJOR
+ENV CITUS_VERSION=$CITUS_VERSION
+ENV PG_MAJOR=$PG_MAJOR
+ENV PG_VERSION=$PG_VERSION
+
 # copy the collected files from the collection container at once into the final container
 COPY --from=dev-tools-collection /collect/ /
 
+# copy citus so files from the build-citus stage
+COPY --from=build-citus /build-citus/ /tmp/build-citus/
+
+# Extract conditionally in shell
+RUN <<'EOF'
+set -eux
+if [ -n "${CITUS_VERSION}" ] && [ -f "/tmp/build-citus/so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar" ]; then
+    mkdir -p /opt/citus-versions/${CITUS_VERSION}
+    cd /opt/citus-versions/${CITUS_VERSION}
+    tar xvf /tmp/build-citus/so-pg${PG_MAJOR}-citus${CITUS_VERSION}.tar
+fi
+EOF
+RUN rm -rf /tmp/build-citus/
+    
 WORKDIR /home/circleci

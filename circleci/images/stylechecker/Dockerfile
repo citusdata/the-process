@@ -16,6 +16,8 @@ apk add --no-cache --virtual installdeps \
       gcc \
       gzip \
       musl-dev \
+      cargo \
+      rust \
       openssl-dev \
       py3-pip \
       python3-dev \
@@ -46,6 +48,10 @@ make -j5
 make install
 cd ../..
 rm -rf uncrustify-uncrustify-0.82.0/
+
+export CARGO_HOME="${CARGO_HOME:-/root/.cargo}"
+cargo install --locked bpf-linker
+install -m 755 "$CARGO_HOME/bin/bpf-linker" /usr/local/bin/bpf-linker
 
 # this image is only used for testing purposes, so should be okay to overwrite system-managed packages
 pip3 install -Ir /tmp/etc/requirements.txt --break-system-packages

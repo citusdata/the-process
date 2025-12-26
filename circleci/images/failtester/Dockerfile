@@ -1,5 +1,4 @@
-# we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
-FROM python:3.9.7-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -55,8 +54,8 @@ RUN <<'EOF'
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
-echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update
 
@@ -82,6 +81,23 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-RUN pip3 install -Ir /tmp/etc/requirements.txt
+RUN <<EOF
+set -eux
+
+pip3 install -Ir /tmp/etc/requirements.txt
+
+MITMDUMP_BIN="$(python3 -c 'import sysconfig, pathlib; print(pathlib.Path(sysconfig.get_path("scripts")) / "mitmdump")')"
+
+if [ ! -x "$MITMDUMP_BIN" ]; then
+    echo "mitmdump executable not found at $MITMDUMP_BIN" >&2
+    exit 1
+fi
+
+if [ "$MITMDUMP_BIN" != "/usr/local/bin/mitmdump" ]; then
+    ln -sf "$MITMDUMP_BIN" /usr/local/bin/mitmdump
+fi
+
+hash mitmdump
+EOF
 
 WORKDIR /home/circleci

@@ -81,6 +81,23 @@ ENV PATH=/usr/lib/postgresql/$PG_MAJOR/bin/:$PATH
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 COPY ./files/etc/requirements.txt /tmp/etc/
-RUN pip3 install -Ir /tmp/etc/requirements.txt
+RUN <<EOF
+set -eux
+
+pip3 install -Ir /tmp/etc/requirements.txt
+
+MITMDUMP_BIN="$(python3 -c 'import sysconfig, pathlib; print(pathlib.Path(sysconfig.get_path("scripts")) / "mitmdump")')"
+
+if [ ! -x "$MITMDUMP_BIN" ]; then
+    echo "mitmdump executable not found at $MITMDUMP_BIN" >&2
+    exit 1
+fi
+
+if [ "$MITMDUMP_BIN" != "/usr/local/bin/mitmdump" ]; then
+    ln -sf "$MITMDUMP_BIN" /usr/local/bin/mitmdump
+fi
+
+hash mitmdump
+EOF
 
 WORKDIR /home/circleci

@@ -26,6 +26,9 @@ CITUS_UPGRADE_VERSIONS_17=v13.2.0
 # Function to get Citus versions for a specific PG major version
 get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
 
+# Function to get the last Citus version for a specific PG major version
+get_last_citus_version = $(lastword $(CITUS_UPGRADE_VERSIONS_$(1)))
+
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets
 # $1 = PG_VERSION
@@ -52,12 +55,12 @@ push-all:: push-extbuilder-$1
 push-extbuilder-all:: push-extbuilder-$1
 
 build-exttester-$1:
-	docker build \
-		exttester/ \
+	docker build . \
 		-f exttester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--build-arg=PG_VERSION_CLEAN=$3 \
+		--build-arg=CITUS_VERSION="$(call get_last_citus_version,$2)" \
 		--tag=${DOCKER_REPO}/exttester:$3${TAG_SUFFIX}
 
 build-all:: build-exttester-$1

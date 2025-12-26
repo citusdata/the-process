@@ -1,6 +1,6 @@
 # postgres doesn't ship their isolation tester in the server-dev images
 # we use this builder to build the isolation tester from a specific version
-FROM buildpack-deps:bullseye AS dev-tools-builder
+FROM buildpack-deps:bookworm AS dev-tools-builder
 
 RUN <<'EOF'
 # install dependencies
@@ -65,7 +65,7 @@ WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/build
 RUN ../configure --prefix /usr/lib/postgresql/${PG_MAJOR}/
 RUN make -sj8
 
-FROM buildpack-deps:bullseye AS dev-tools-collection
+FROM buildpack-deps:bookworm AS dev-tools-collection
 
 WORKDIR /collect
 
@@ -84,7 +84,7 @@ COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/build/src/te
 COPY --from=dev-tools-builder /build/postgresql-${PG_VERSION_CLEAN}/src/test/regress/ usr/lib/postgresql/${PG_MAJOR}/lib/regress/
 RUN rm -rf usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.c usr/lib/postgresql/${PG_MAJOR}/lib/regress/*.h
 
-FROM buildpack-deps:bullseye
+FROM buildpack-deps:bookworm
 
 # add unpriviliged user for tests
 RUN useradd -ms /bin/bash circleci
@@ -151,8 +151,8 @@ set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
-echo "deb https://apt-archive.postgresql.org/pub/repos/apt bullseye-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update
 
@@ -161,16 +161,17 @@ pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep 
 
 apt-get install -y --no-install-recommends --allow-downgrades \
     libdbi-perl \
-    libdbd-pg-perl=3.16.3-1.pgdg110+1 \
     libpq-dev=${pgdg_version} \
     libpq5=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json \
+    postgresql-${PG_MAJOR}-wal2json
 
-    # clear apt cache
+apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
+
+# clear apt cache
 rm -rf /var/lib/apt/lists/*
 EOF
 

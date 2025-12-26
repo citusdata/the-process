@@ -1,4 +1,3 @@
-# we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
 FROM alpine:latest
 ARG TOOLS_VERSION
 

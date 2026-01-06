@@ -86,13 +86,17 @@ jobs:
 
 
   build_release_images:
-    if: github.ref_name == 'master'
+    if: github.ref_name == 'master' || github.ref_name == 'ihalatci-update-workflow'
+    needs: prepare_pgversion_matrix
     name: push-test-images-for-release
     runs-on: ubuntu-latest
     permissions:
       packages: write
     strategy:
       fail-fast: false
+      matrix:
+        command: [extbuilder, exttester, failtester]
+        pgversion: ${{ fromJSON(needs.prepare_pgversion_matrix.outputs.pgversions) }}
 
     steps:
       - name: Checkout repository
@@ -108,4 +112,12 @@ jobs:
       - name: Build & Push all live images
         run: |
           cd circleci/images
-          RELEASE=1 make push-all
+          RELEASE=1 make push-${{ matrix.command }}-${{ matrix.pgversion }}
+      - run: docker system prune --all --force --volumes
+        if: always()
+      - name: Free Docker space
+        if: always()
+        run: |
+          docker image prune --all --force
+          docker builder prune --all --force
+          docker system df

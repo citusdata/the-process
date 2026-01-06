@@ -92,7 +92,7 @@ jobs:
 
 
   build_release_images:
-    if: github.ref_name == 'master' || github.ref_name == 'ihalatci-update-workflow'
+    if: github.ref_name == 'master'
     needs: prepare_pgversion_matrix
     name: push-test-images-for-release
     runs-on: ubuntu-latest
@@ -109,7 +109,7 @@ jobs:
     steps: *build_images_per_pg_steps
 
   build_release_images_shared:
-    if: github.ref_name == 'master' || github.ref_name == 'ihalatci-update-workflow'
+    if: github.ref_name == 'master'
     name: push-shared-images-for-release
     runs-on: ubuntu-latest
     permissions:

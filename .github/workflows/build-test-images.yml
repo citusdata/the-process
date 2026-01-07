@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Need the repo checked out in order to read the file
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: get_versions
         run: cat circleci/images/PG_VERSIONS >> $GITHUB_OUTPUT
     outputs:
@@ -27,18 +27,17 @@ jobs:
       packages: write
     needs:
       - prepare_pgversion_matrix
+    env:
+      RELEASE_FLAG: ""
     strategy:
       fail-fast: false
       matrix:
-        command:
-          - extbuilder
-          - exttester
-          - failtester
+        command: [extbuilder, exttester, failtester]
         pgversion: ${{ fromJSON(needs.prepare_pgversion_matrix.outputs.pgversions) }}
 
-    steps:
+    steps: &build_images_per_pg_steps
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: 'Login to GitHub Container Registry'
         uses: docker/login-action@v3
@@ -48,10 +47,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # If current branch is not master,build and publish dev image
-      - name: Build & Push all dev images
+      - name: Build & Push images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          if [ -n "${RELEASE_FLAG}" ]; then
+            RELEASE=${RELEASE_FLAG} make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          else
+            make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          fi
 
   build_dev_images_shared:
     if: github.ref_name != 'master'
@@ -59,17 +62,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    env:
+      RELEASE_FLAG: ""
     strategy:
       fail-fast: false
       matrix:
-        command:
-          - citusupgradetester
-          - pgupgradetester
-          - stylechecker
+        command: [citusupgradetester, pgupgradetester, stylechecker]
 
-    steps:
+    steps: &build_shared_image_steps
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: 'Login to GitHub Container Registry'
         uses: docker/login-action@v3
@@ -79,33 +81,43 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # If current branch is not master,build and publish dev image
-      - name: Build & Push all dev images
+      - name: Build & Push images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-all
+          if [ -n "${RELEASE_FLAG}" ]; then
+            RELEASE=${RELEASE_FLAG} make push-${{ matrix.command }}-all
+          else
+            make push-${{ matrix.command }}-all
+          fi
 
 
   build_release_images:
     if: github.ref_name == 'master'
+    needs: prepare_pgversion_matrix
     name: push-test-images-for-release
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    env:
+      RELEASE_FLAG: "1"
     strategy:
       fail-fast: false
+      matrix:
+        command: [extbuilder, exttester, failtester]
+        pgversion: ${{ fromJSON(needs.prepare_pgversion_matrix.outputs.pgversions) }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    steps: *build_images_per_pg_steps
 
-      - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push all live images
-        run: |
-          cd circleci/images
-          RELEASE=1 make push-all
+  build_release_images_shared:
+    if: github.ref_name == 'master'
+    name: push-shared-images-for-release
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      RELEASE_FLAG: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        command: [citusupgradetester, pgupgradetester, stylechecker]
+    steps: *build_shared_image_steps

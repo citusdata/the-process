@@ -18,7 +18,7 @@ construct==2.10.70; python_version >= '3.6'
 cryptography==44.0.3; python_version >= '3.7' and python_full_version not in '3.9.0, 3.9.1'
 docopt==0.6.2
 execnet==2.1.2; python_version >= '3.8'
-filelock==3.20.2; python_version >= '3.10'
+filelock==3.20.3; python_version >= '3.10'
 flask==3.1.2; python_version >= '3.9'
 h11==0.16.0; python_version >= '3.8'
 h2==4.3.0; python_version >= '3.9'

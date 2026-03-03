@@ -6,7 +6,7 @@ on:
     branches: [master]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -22,11 +22,20 @@ jobs:
           private-key: ${{ secrets.PACKAGING_APP_PRIVATE_KEY }}
           owner: citusdata
 
-      - name: Comment on citus PR with image tag postfix
+      - name: Checkout citus sync branch
+        uses: actions/checkout@v4
+        with:
+          repository: citusdata/citus
+          ref: automation/dependency-security-sync
+          token: ${{ steps.app-token.outputs.token }}
+          path: citus
+
+      - name: Update citus image_suffix with merged the-process SHA
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
+          cd citus
           short_sha=$(echo "$MERGE_SHA" | cut -c1-7)
           postfix="-v${short_sha}"
 
@@ -36,4 +45,18 @@ jobs:
             exit 0
           fi
 
-          gh pr comment "$citus_pr" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}. Image tag postfix placeholder: ${postfix}. TODO: replace placeholder source when final postfix publication source is confirmed."
+          sed -i -E "s|(image_suffix:\s*)\"-v[0-9a-f]+\"|\1\"${postfix}\"|" .github/workflows/build_and_test.yml
+
+          if git diff --quiet -- .github/workflows/build_and_test.yml; then
+            echo "No build_and_test.yml image_suffix change needed."
+            gh pr comment "$citus_pr" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}. image_suffix already matches ${postfix}."
+            exit 0
+          fi
+
+          git config user.name "packagingApp[bot]"
+          git config user.email "packagingApp[bot]@users.noreply.github.com"
+          git add .github/workflows/build_and_test.yml
+          git commit -m "Update image_suffix from merged the-process commit"
+          git push origin automation/dependency-security-sync
+
+          gh pr comment "$citus_pr" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}; updated build_and_test.yml image_suffix to ${postfix}."

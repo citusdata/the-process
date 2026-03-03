@@ -24,8 +24,7 @@ def update_pipfile(pipfile_path, patched_versions):
     content = pipfile_path.read_text()
     original_content = content
 
-    for package in ("cryptography", "werkzeug"):
-        patched = patched_versions.get(package)
+    for package, patched in patched_versions.items():
         if not patched:
             continue
 

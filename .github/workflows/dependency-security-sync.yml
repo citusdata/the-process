@@ -82,7 +82,7 @@ jobs:
           git config user.name "packagingApp[bot]"
           git config user.email "packagingApp[bot]@users.noreply.github.com"
           git checkout -B automation/dependency-security-sync
-          git add src/test/regress/Pipfile src/test/regress/Pipfile.lock .devcontainer/src/test/regress/Pipfile .devcontainer/src/test/regress/Pipfile.lock .github/dependabot.yml || true
+          git add src/test/regress/Pipfile src/test/regress/Pipfile.lock .devcontainer/src/test/regress/Pipfile .devcontainer/src/test/regress/Pipfile.lock || true
           if git diff --cached --quiet; then
             echo "No citus dependency changes to commit."
           else
@@ -111,7 +111,7 @@ jobs:
           git config user.name "packagingApp[bot]"
           git config user.email "packagingApp[bot]@users.noreply.github.com"
           git checkout -B automation/dependency-security-sync
-          git add circleci/images/citusupgradetester/files/etc/requirements.txt circleci/images/failtester/files/etc/requirements.txt circleci/images/pgupgradetester/files/etc/requirements.txt circleci/images/stylechecker/files/etc/requirements.txt .github/dependabot.yml || true
+          git add circleci/images/citusupgradetester/files/etc/requirements.txt circleci/images/failtester/files/etc/requirements.txt circleci/images/pgupgradetester/files/etc/requirements.txt circleci/images/stylechecker/files/etc/requirements.txt || true
           if git diff --cached --quiet; then
             echo "No the-process dependency changes to commit."
           else

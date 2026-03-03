@@ -78,7 +78,7 @@ export LLVM_SYS_211_STATIC=1
 export AYA_RUSTC_LLVM_PROXY_DISABLE_DLOPEN=1
 export AYA_RUSTC_LLVM_PROXY_LIB_DIR="${LLVM_LIBDIR}"
 
-cargo install --locked bpf-linker --no-default-features --features llvm-21
+cargo install --locked bpf-linker --version 0.9.15 --no-default-features --features llvm-21
 
 
 install -m 755 "$CARGO_HOME/bin/bpf-linker" /usr/local/bin/bpf-linker

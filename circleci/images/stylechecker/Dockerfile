@@ -65,8 +65,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profil
 . "$CARGO_HOME/env"
 rustup toolchain install nightly-x86_64-unknown-linux-musl
 rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-musl
-cargo install --locked bpf-linker --no-default-features --features llvm-21
 export PATH="/root/.cargo/bin:${PATH}"
+export PATH="/usr/lib/llvm21/bin:${PATH}"
 
 LLVM_CONFIG="$(command -v llvm-config || command -v llvm-config-21)"
 LLVM_LIBDIR="$(${LLVM_CONFIG} --libdir)"
@@ -77,6 +77,8 @@ export LLVM_SYS_211_PREFIX="${LLVM_SYS_211_PREFIX:-${LLVM_PREFIX}}"
 export LLVM_SYS_211_STATIC=1
 export AYA_RUSTC_LLVM_PROXY_DISABLE_DLOPEN=1
 export AYA_RUSTC_LLVM_PROXY_LIB_DIR="${LLVM_LIBDIR}"
+
+cargo install --locked bpf-linker --no-default-features --features llvm-21
 
 
 install -m 755 "$CARGO_HOME/bin/bpf-linker" /usr/local/bin/bpf-linker

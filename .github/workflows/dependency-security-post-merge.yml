@@ -1,0 +1,39 @@
+name: dependency-security-post-merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  notify-citus:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'automation/dependency-security-sync'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PACKAGING_APP_ID }}
+          private-key: ${{ secrets.PACKAGING_APP_PRIVATE_KEY }}
+          owner: citusdata
+
+      - name: Comment on citus PR with image tag postfix
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          short_sha=$(echo "$MERGE_SHA" | cut -c1-7)
+          postfix="-v${short_sha}"
+
+          citus_pr=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number // empty')
+          if [ -z "$citus_pr" ]; then
+            echo "No open citus sync PR found; skipping."
+            exit 0
+          fi
+
+          gh pr comment "$citus_pr" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}. Image tag postfix placeholder: ${postfix}. TODO: replace placeholder source when final postfix publication source is confirmed."

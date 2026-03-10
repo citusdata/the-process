@@ -48,15 +48,15 @@ make uncrustify/.install
 cd ..
 rm -rf "v${TOOLS_VERSION}.tar.gz"
 
-curl -fsSL "https://codeload.github.com/uncrustify/uncrustify/tar.gz/uncrustify-0.82.0" | tar xz
-cd uncrustify-uncrustify-0.82.0/
+curl -fsSL "https://codeload.github.com/uncrustify/uncrustify/tar.gz/uncrustify-0.68.1" | tar xz
+cd uncrustify-uncrustify-0.68.1/
 mkdir build
 cd build
 cmake ..
 make -j5
 make install
 cd ../..
-rm -rf uncrustify-uncrustify-0.82.0/
+rm -rf uncrustify-uncrustify-0.68.1/
 
 export CARGO_HOME="${CARGO_HOME:-/root/.cargo}"
 export RUSTUP_HOME="${RUSTUP_HOME:-/root/.rustup}"

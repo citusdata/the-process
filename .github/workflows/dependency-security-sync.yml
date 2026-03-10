@@ -1,0 +1,164 @@
+name: dependency-security-sync
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-security-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PACKAGING_APP_ID }}
+          private-key: ${{ secrets.PACKAGING_APP_PRIVATE_KEY }}
+          owner: citusdata
+
+      - name: Checkout the-process
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Checkout citus
+        uses: actions/checkout@v4
+        with:
+          repository: citusdata/citus
+          path: citus
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pipenv and gh auth
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          python -m pip install --upgrade pip pipenv
+          gh auth setup-git
+
+      - name: Fetch open Dependabot alerts from citus
+        id: alerts
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api -H "Accept: application/vnd.github+json" \
+            "/repos/citusdata/citus/dependabot/alerts?state=open&per_page=100" > alerts.json
+          count=$(jq 'length' alerts.json)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" -eq 0 ]; then
+            echo "No open alerts found. Exiting." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Run cross-repo sync
+        if: steps.alerts.outputs.count != '0'
+        run: |
+          python .github/scripts/security_sync.py \
+            --alerts alerts.json \
+            --citus-root "$PWD/citus" \
+            --the-process-root "$PWD"
+
+      - name: Create or update citus PR
+        if: steps.alerts.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          cd citus
+          git config user.name "packagingApp[bot]"
+          git config user.email "packagingApp[bot]@users.noreply.github.com"
+          git checkout -B automation/dependency-security-sync
+          git add src/test/regress/Pipfile src/test/regress/Pipfile.lock .devcontainer/src/test/regress/Pipfile .devcontainer/src/test/regress/Pipfile.lock || true
+          if git diff --cached --quiet; then
+            echo "No citus dependency changes to commit."
+          else
+            git commit -m "Automate Dependabot alert security dependency sync"
+            git push -f origin automation/dependency-security-sync
+          fi
+
+          pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number // empty')
+          if [ -z "$pr_number" ]; then
+            gh pr create \
+              --repo citusdata/citus \
+              --base main \
+              --head automation/dependency-security-sync \
+              --title "Automated security dependency sync from Dependabot alerts" \
+              --body "Automated weekly security sync based on open Dependabot alerts.\n\nThis PR is managed by dependency-security-sync workflow." \
+              --label dependencies
+            pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
+          fi
+          echo "CITUS_PR=$pr_number" >> "$GITHUB_ENV"
+
+      - name: Create or update the-process PR
+        if: steps.alerts.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name "packagingApp[bot]"
+          git config user.email "packagingApp[bot]@users.noreply.github.com"
+          git checkout -B automation/dependency-security-sync
+          git add circleci/images/citusupgradetester/files/etc/requirements.txt circleci/images/failtester/files/etc/requirements.txt circleci/images/pgupgradetester/files/etc/requirements.txt circleci/images/stylechecker/files/etc/requirements.txt || true
+          if git diff --cached --quiet; then
+            echo "No the-process dependency changes to commit."
+          else
+            git commit -m "Automate security requirements sync from citus alerts"
+            git push -f origin automation/dependency-security-sync
+          fi
+
+          pr_number=$(gh pr list --repo citusdata/the-process --head automation/dependency-security-sync --state open --json number --jq '.[0].number // empty')
+          if [ -z "$pr_number" ]; then
+            gh pr create \
+              --repo citusdata/the-process \
+              --base master \
+              --head automation/dependency-security-sync \
+              --title "Automated requirements sync for Dependabot security alerts" \
+              --body "Automated weekly requirements refresh based on open Dependabot alerts from citus.\n\nThis PR is managed by dependency-security-sync workflow." \
+              --label dependencies
+            pr_number=$(gh pr list --repo citusdata/the-process --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
+          fi
+          echo "THE_PROCESS_PR=$pr_number" >> "$GITHUB_ENV"
+
+      - name: Close superseded Dependabot PRs in citus
+        if: steps.alerts.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          cd citus
+          for n in $(gh pr list --repo citusdata/citus --state open --json number,author --jq '.[] | select(.author.login=="app/dependabot") | .number'); do
+            gh pr close "$n" --repo citusdata/citus --comment "Closing in favor of consolidated automated security sync PR #${CITUS_PR}."
+          done
+          gh pr comment "$CITUS_PR" --repo citusdata/citus --body "Supersedes open Dependabot PRs with this consolidated automated security sync."
+
+      - name: Close superseded Dependabot PRs in the-process
+        if: steps.alerts.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for n in $(gh pr list --repo citusdata/the-process --state open --json number,author --jq '.[] | select(.author.login=="app/dependabot") | .number'); do
+            gh pr close "$n" --repo citusdata/the-process --comment "Closing in favor of consolidated automated security sync PR #${THE_PROCESS_PR}."
+          done
+          gh pr comment "$THE_PROCESS_PR" --repo citusdata/the-process --body "Supersedes open Dependabot PRs with this consolidated automated requirements sync."
+
+      - name: Summary
+        if: steps.alerts.outputs.count != '0'
+        run: |
+          {
+            echo "## Dependency security sync"
+            echo "- Alerts processed: ${{ steps.alerts.outputs.count }}"
+            echo "- the-process PR: #${THE_PROCESS_PR}"
+            echo "- citus PR: #${CITUS_PR}"
+          } >> "$GITHUB_STEP_SUMMARY"

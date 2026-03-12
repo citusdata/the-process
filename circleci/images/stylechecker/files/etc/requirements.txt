@@ -4,7 +4,7 @@
 
 -i https://pypi.python.org/simple
 attrs==25.4.0; python_version >= '3.9'
-black==24.10.0; python_version >= '3.9'
+black==26.3.1; python_version >= '3.9'
 click==8.3.1; python_version >= '3.10'
 flake8==7.3.0; python_version >= '3.9'
 flake8-bugbear==25.11.29; python_version >= '3.10'

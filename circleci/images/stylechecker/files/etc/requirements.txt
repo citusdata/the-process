@@ -1,4 +1,4 @@
-# generated from Citus's Pipfile.lock (in src/test/regress)
+# generated from Citus's Pipfile.lock (in src/test/regress) as of citusdata/citus#8547
 # using `pipenv requirements --dev-only > requirements.txt`, so as to avoid the
 # need for pipenv/pyenv in this image
 

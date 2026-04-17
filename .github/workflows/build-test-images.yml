@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Need the repo checked out in order to read the file
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: get_versions
         run: cat circleci/images/PG_VERSIONS >> $GITHUB_OUTPUT
     outputs:
@@ -37,10 +37,10 @@ jobs:
 
     steps: &build_images_per_pg_steps
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -71,10 +71,10 @@ jobs:
 
     steps: &build_shared_image_steps
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -14,16 +14,16 @@ PG_VERSIONS=$(shell cat PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
 
 PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
-STYLE_CHECKER_TOOLS_VERSION=0.8.33
+STYLE_CHECKER_TOOLS_VERSION=0.8.18
 
 # Upgrade tests for the PG major versions from PG_VERSIONS file 
 CITUS_UPGRADE_PG_VERSIONS=$(shell head -n2 PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 
-CITUS_UPGRADE_VERSIONS_15=v12.1.10
+CITUS_UPGRADE_VERSIONS_15=v12.1.11
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
-CITUS_UPGRADE_VERSIONS_16=v12.1.10
+CITUS_UPGRADE_VERSIONS_16=v12.1.11
 # Latest minor version of Citus 13
-CITUS_UPGRADE_VERSIONS_17=v13.2.0
+CITUS_UPGRADE_VERSIONS_17=v13.2.1
 
 # Function to get Citus versions for a specific PG major version
 get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))

@@ -7,105 +7,93 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   prepare_pgversion_matrix:
     runs-on: ubuntu-latest
     steps:
       # Need the repo checked out in order to read the file
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - id: get_versions
-        run: cat circleci/images/PG_VERSIONS >> $GITHUB_OUTPUT
+        shell: bash
+        run: |
+          versions=$(cut -d= -f2 circleci/images/PG_VERSIONS | jq -R -s -c 'split("\n")[:-1]')
+          echo "pgversions=${versions}" >> "$GITHUB_OUTPUT"
     outputs:
-      # Will look like '["13.9", "14.6", "15.1"]'
-      pgversions: ${{ toJSON(steps.get_versions.outputs.*) }}
+      # Will look like '["15.17", "16.13", "17.9", "18.3"]'
+      pgversions: ${{ steps.get_versions.outputs.pgversions }}
 
-  build_dev_images_per_postgres:
-    if: github.ref_name != 'master'
-    name: push-test-images-for-dev
+  build_images_per_postgres:
+    name: push-test-images-per-postgres
     runs-on: ubuntu-latest
     permissions:
       packages: write
     needs:
       - prepare_pgversion_matrix
+    env:
+      RELEASE_FLAG: ${{ (github.ref_name == 'master' || startsWith(github.ref_name, 'release-')) && '1' || '' }}
     strategy:
       fail-fast: false
       matrix:
-        command:
-          - extbuilder
-          - exttester
-          - failtester
+        command: [extbuilder, exttester, failtester]
         pgversion: ${{ fromJSON(needs.prepare_pgversion_matrix.outputs.pgversions) }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # If current branch is not master,build and publish dev image
-      - name: Build & Push all dev images
+      # Build and publish release/dev image based on RELEASE_FLAG
+      - name: Build & Push images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          if [ -n "${RELEASE_FLAG}" ]; then
+            RELEASE=${RELEASE_FLAG} make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          else
+            make push-${{ matrix.command }}-${{ matrix.pgversion }}
+          fi
 
-  build_dev_images_shared:
-    if: github.ref_name != 'master'
-    name: push-test-images-for-dev
+  build_images_shared:
+    name: push-test-images-shared
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    env:
+      RELEASE_FLAG: ${{ (github.ref_name == 'master' || startsWith(github.ref_name, 'release-')) && '1' || '' }}
     strategy:
       fail-fast: false
       matrix:
-        command:
-          - citusupgradetester
-          - pgupgradetester
-          - stylechecker
+        command: [citusupgradetester, pgupgradetester, stylechecker]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # If current branch is not master,build and publish dev image
-      - name: Build & Push all dev images
+      # Build and publish release/dev image based on RELEASE_FLAG
+      - name: Build & Push images
         run: |
           cd circleci/images
-          make push-${{ matrix.command }}-all
-
-
-  build_release_images:
-    if: github.ref_name == 'master'
-    name: push-test-images-for-release
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    strategy:
-      fail-fast: false
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push all live images
-        run: |
-          cd circleci/images
-          RELEASE=1 make push-all
+          if [ -n "${RELEASE_FLAG}" ]; then
+            RELEASE=${RELEASE_FLAG} make push-${{ matrix.command }}-all
+          else
+            make push-${{ matrix.command }}-all
+          fi

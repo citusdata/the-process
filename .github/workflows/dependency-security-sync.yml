@@ -97,7 +97,7 @@ jobs:
               --base main \
               --head automation/dependency-security-sync \
               --title "Automated security dependency sync from Dependabot alerts" \
-              --body "Automated weekly security sync based on open Dependabot alerts.\n\nThis PR is managed by dependency-security-sync workflow." \
+              --body $'Automated weekly security sync based on open Dependabot alerts.\n\nThis PR is managed by dependency-security-sync workflow.' \
               --label dependencies
             pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
           fi
@@ -126,7 +126,7 @@ jobs:
               --base master \
               --head automation/dependency-security-sync \
               --title "Automated requirements sync for Dependabot security alerts" \
-              --body "Automated weekly requirements refresh based on open Dependabot alerts from citus.\n\nThis PR is managed by dependency-security-sync workflow." \
+              --body $'Automated weekly requirements refresh based on open Dependabot alerts from citus.\n\nThis PR is managed by dependency-security-sync workflow.' \
               --label dependencies
             pr_number=$(gh pr list --repo citusdata/the-process --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
           fi

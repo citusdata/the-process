@@ -18,8 +18,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.PACKAGING_APP_ID }}
-          private-key: ${{ secrets.PACKAGING_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_KEY }}
           owner: citusdata
 
       - name: Checkout citus sync branch

@@ -106,7 +106,8 @@ jobs:
               --head automation/dependency-security-sync \
               --title "Automated security dependency sync from Dependabot alerts" \
               --body $'Automated weekly security sync based on open Dependabot alerts.\n\nThis PR is managed by dependency-security-sync workflow.' \
-              --label dependencies
+              --label dependencies \
+              --draft
             pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
           fi
           echo "CITUS_PR=$pr_number" >> "$GITHUB_ENV"

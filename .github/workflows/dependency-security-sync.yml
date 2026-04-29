@@ -73,7 +73,6 @@ jobs:
           python .github/scripts/security_sync.py \
             --alerts alerts.json \
             --citus-root "$PWD/citus" \
-            --the-process-root "$PWD" \
             --summary-out sync-summary.json
           addressed=$(jq -r '.addressed | join(" ")' sync-summary.json)
           echo "addressed=$addressed" >> "$GITHUB_OUTPUT"
@@ -111,6 +110,24 @@ jobs:
             pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number')
           fi
           echo "CITUS_PR=$pr_number" >> "$GITHUB_ENV"
+
+      - name: Regenerate the-process requirements
+        if: steps.alerts.outputs.count != '0' && steps.sync.outputs.addressed != ''
+        run: |
+          cd citus/src/test/regress
+          base=$(pipenv requirements)
+          dev=$(pipenv requirements --dev)
+          cd "$GITHUB_WORKSPACE"
+          ref="citusdata/citus#${CITUS_PR}"
+          base_header=$'# generated from Citus\'s Pipfile.lock (in src/test/regress) as of '"${ref}"$'\n# using `pipenv requirements > requirements.txt`, so as to avoid the\n# need for pipenv/pyenv in this image\n\n'
+          dev_header=$'# generated from Citus\'s Pipfile.lock (in src/test/regress) as of '"${ref}"$'\n# using `pipenv requirements --dev > requirements.txt`, so as to avoid the\n# need for pipenv/pyenv in this image\n\n'
+          for f in \
+            circleci/images/citusupgradetester/files/etc/requirements.txt \
+            circleci/images/failtester/files/etc/requirements.txt \
+            circleci/images/pgupgradetester/files/etc/requirements.txt; do
+            printf '%s%s\n' "$base_header" "$base" > "$f"
+          done
+          printf '%s%s\n' "$dev_header" "$dev" > circleci/images/stylechecker/files/etc/requirements.txt
 
       - name: Create or update the-process PR
         if: steps.alerts.outputs.count != '0'

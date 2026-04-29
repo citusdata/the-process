@@ -76,39 +76,15 @@ def lock_version(lockfile_path, package):
     return None
 
 
-def write_requirements(the_process_root, base_requirements, dev_requirements, citus_sha):
-    base_header = (
-        f"# generated from Citus's Pipfile.lock (in src/test/regress) as of {citus_sha}\n"
-        "# using `pipenv requirements > requirements.txt`, so as to avoid the\n"
-        "# need for pipenv/pyenv in this image\n\n"
-    )
-    dev_header = (
-        f"# generated from Citus's Pipfile.lock (in src/test/regress) as of {citus_sha}\n"
-        "# using `pipenv requirements --dev > requirements.txt`, so as to avoid the\n"
-        "# need for pipenv/pyenv in this image\n\n"
-    )
-    base_targets = [
-        the_process_root / "circleci/images/citusupgradetester/files/etc/requirements.txt",
-        the_process_root / "circleci/images/failtester/files/etc/requirements.txt",
-        the_process_root / "circleci/images/pgupgradetester/files/etc/requirements.txt",
-    ]
-    for target in base_targets:
-        target.write_text(base_header + base_requirements)
-    dev_target = the_process_root / "circleci/images/stylechecker/files/etc/requirements.txt"
-    dev_target.write_text(dev_header + dev_requirements)
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alerts", required=True)
     parser.add_argument("--citus-root", required=True)
-    parser.add_argument("--the-process-root", required=True)
     parser.add_argument("--summary-out", required=True,
                         help="Path to write per-alert outcome JSON")
     args = parser.parse_args()
 
     citus_root = Path(args.citus_root)
-    the_process_root = Path(args.the_process_root)
 
     alerts = json.loads(Path(args.alerts).read_text())
 
@@ -187,12 +163,6 @@ def main():
 
     if not addressed:
         sys.exit("No alerts were addressed by this run; aborting before opening PRs.")
-
-    base_requirements = capture(["pipenv", "requirements"], cwd=pipfile_paths[0].parent)
-    dev_requirements = capture(["pipenv", "requirements", "--dev"], cwd=pipfile_paths[0].parent)
-    citus_sha = capture(["git", "rev-parse", "--short", "HEAD"], cwd=citus_root).strip()
-    write_requirements(the_process_root, base_requirements, dev_requirements,
-                       f"citusdata/citus@{citus_sha}")
 
 
 if __name__ == "__main__":

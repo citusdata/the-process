@@ -67,11 +67,19 @@ jobs:
 
       - name: Run cross-repo sync
         if: steps.alerts.outputs.count != '0'
+        id: sync
         run: |
+          python -m pip install --quiet packaging
           python .github/scripts/security_sync.py \
             --alerts alerts.json \
             --citus-root "$PWD/citus" \
-            --the-process-root "$PWD"
+            --the-process-root "$PWD" \
+            --summary-out sync-summary.json
+          addressed=$(jq -r '.addressed | join(" ")' sync-summary.json)
+          echo "addressed=$addressed" >> "$GITHUB_OUTPUT"
+          echo "## Sync summary" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '.details[] | "- \(.overall): \(.package) -> \(.patched) (\(.scope))"' \
+            sync-summary.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create or update citus PR
         if: steps.alerts.outputs.count != '0'
@@ -132,26 +140,39 @@ jobs:
           fi
           echo "THE_PROCESS_PR=$pr_number" >> "$GITHUB_ENV"
 
-      - name: Close superseded Dependabot PRs in citus
-        if: steps.alerts.outputs.count != '0'
+      - name: Close addressed Dependabot PRs in citus
+        if: steps.sync.outputs.addressed != ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ADDRESSED: ${{ steps.sync.outputs.addressed }}
         run: |
-          cd citus
-          for n in $(gh pr list --repo citusdata/citus --state open --json number,author --jq '.[] | select(.author.login=="app/dependabot") | .number'); do
-            gh pr close "$n" --repo citusdata/citus --comment "Closing in favor of consolidated automated security sync PR #${CITUS_PR}."
+          for pkg in $ADDRESSED; do
+            for n in $(gh pr list --repo citusdata/citus --state open \
+              --search "author:app/dependabot in:title Bump $pkg" \
+              --json number --jq '.[].number'); do
+              gh pr close "$n" --repo citusdata/citus \
+                --comment "Closing in favor of consolidated automated security sync PR #${CITUS_PR} (addresses $pkg)."
+            done
           done
-          gh pr comment "$CITUS_PR" --repo citusdata/citus --body "Supersedes open Dependabot PRs with this consolidated automated security sync."
+          gh pr comment "$CITUS_PR" --repo citusdata/citus \
+            --body "Supersedes Dependabot PRs for: $ADDRESSED."
 
-      - name: Close superseded Dependabot PRs in the-process
-        if: steps.alerts.outputs.count != '0'
+      - name: Close addressed Dependabot PRs in the-process
+        if: steps.sync.outputs.addressed != ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ADDRESSED: ${{ steps.sync.outputs.addressed }}
         run: |
-          for n in $(gh pr list --repo citusdata/the-process --state open --json number,author --jq '.[] | select(.author.login=="app/dependabot") | .number'); do
-            gh pr close "$n" --repo citusdata/the-process --comment "Closing in favor of consolidated automated security sync PR #${THE_PROCESS_PR}."
+          for pkg in $ADDRESSED; do
+            for n in $(gh pr list --repo citusdata/the-process --state open \
+              --search "author:app/dependabot in:title Bump $pkg" \
+              --json number --jq '.[].number'); do
+              gh pr close "$n" --repo citusdata/the-process \
+                --comment "Closing in favor of consolidated automated requirements sync PR #${THE_PROCESS_PR} (addresses $pkg)."
+            done
           done
-          gh pr comment "$THE_PROCESS_PR" --repo citusdata/the-process --body "Supersedes open Dependabot PRs with this consolidated automated requirements sync."
+          gh pr comment "$THE_PROCESS_PR" --repo citusdata/the-process \
+            --body "Supersedes Dependabot PRs for: $ADDRESSED."
 
       - name: Summary
         if: steps.alerts.outputs.count != '0'

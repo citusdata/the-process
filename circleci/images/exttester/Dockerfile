@@ -42,11 +42,21 @@ EOF
 ARG PG_VERSION
 ARG PG_VERSION_CLEAN
 ARG PG_MAJOR
+ARG PG19_SOURCE_REF
 
 WORKDIR /build/
-RUN curl -fLO "http://ftp.postgresql.org/pub/source/v${PG_VERSION_CLEAN}/postgresql-${PG_VERSION_CLEAN}.tar.bz2"
-
-RUN tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
+RUN <<'EOF'
+set -eux
+if [ "${PG_MAJOR}" = "19" ]; then
+    # PG19 is unreleased -- fetch the source from a pinned upstream git ref
+    mkdir -p "postgresql-${PG_VERSION_CLEAN}"
+    curl -fsL "https://codeload.github.com/postgres/postgres/tar.gz/${PG19_SOURCE_REF}" \
+        | tar -xzf - -C "postgresql-${PG_VERSION_CLEAN}" --strip-components=1
+else
+    curl -fLO "http://ftp.postgresql.org/pub/source/v${PG_VERSION_CLEAN}/postgresql-${PG_VERSION_CLEAN}.tar.bz2"
+    tar jxf "postgresql-${PG_VERSION_CLEAN}.tar.bz2"
+fi
+EOF
 
 # apply optional patches that might be required for a successful testsuite
 WORKDIR /build/postgresql-${PG_VERSION_CLEAN}/
@@ -142,36 +152,91 @@ RUN locale-gen
 
 ARG PG_VERSION
 ARG PG_MAJOR
+ARG PG19_SOURCE_REF
 ARG CITUS_VERSION
 ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
+ENV PG19_SOURCE_REF=$PG19_SOURCE_REF
 ENV CITUS_VERSION=$CITUS_VERSION
 
 RUN <<'EOF'
 # install postgres ecosystem for pg version: $PG_VERSION
 set -eux
 
-# install key and repositories
-curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
-echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
+if [ "${PG_MAJOR}" = "19" ]; then
+    # PG19 is unreleased and not on apt.postgresql.org. Build from a pinned
+    # upstream source ref so this image can still be produced.
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bison \
+        flex \
+        libdbi-perl \
+        libxml2-dev \
+        pkg-config \
+        zlib1g-dev
+    apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
 
-apt-get update
+    src_dir=/tmp/pg19-src
+    rm -rf "${src_dir}"
+    mkdir -p "${src_dir}"
+    curl -fsL "https://codeload.github.com/postgres/postgres/tar.gz/${PG19_SOURCE_REF}" \
+        | tar -xzf - -C "${src_dir}" --strip-components=1
+    cd "${src_dir}"
+    ./configure \
+        --prefix=/usr/lib/postgresql/${PG_MAJOR} \
+        --datarootdir=/usr/share/postgresql/${PG_MAJOR} \
+        --includedir=/usr/include/postgresql/${PG_MAJOR} \
+        --sysconfdir=/etc/postgresql-common \
+        --with-openssl \
+        --with-icu \
+        --with-libxml \
+        --with-libxslt \
+        --with-lz4 \
+        --with-zstd \
+        --enable-rpath \
+        --with-system-tzdata=/usr/share/zoneinfo
+    make -sj"$(nproc)" world-bin
+    make install-world-bin
+    cd /
+    rm -rf "${src_dir}"
 
-# infer the pgdgversion of postgres based on the $PG_VERSION
-pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
+    # apt-installed postgres packages normally create this user/group; do
+    # it manually for the source-build path so subsequent RUN steps that
+    # chown to postgres work.
+    if ! getent group postgres >/dev/null; then
+        groupadd --system postgres
+    fi
+    if ! id postgres >/dev/null 2>&1; then
+        useradd --system --gid postgres --home-dir /var/lib/postgresql --shell /bin/bash postgres
+    fi
+    mkdir -p /var/lib/postgresql
+    chown -R postgres:postgres /var/lib/postgresql
 
-apt-get install -y --no-install-recommends --allow-downgrades \
-    libdbi-perl \
-    libpq-dev=${pgdg_version} \
-    libpq5=${pgdg_version} \
-    postgresql-${PG_MAJOR}=${pgdg_version} \
-    postgresql-client-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
-    postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json
+    # wal2json is not yet packaged against PG19, so we skip it for this
+    # branch. Existing tests that depend on it should pin to PG <= 18.
+else
+    # install key and repositories
+    curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
+    echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+    echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
-apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
+    apt-get update
+
+    # infer the pgdgversion of postgres based on the $PG_VERSION
+    pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep "${PG_VERSION}" | awk '{print $2}' | head -n1 )
+
+    apt-get install -y --no-install-recommends --allow-downgrades \
+        libdbi-perl \
+        libpq-dev=${pgdg_version} \
+        libpq5=${pgdg_version} \
+        postgresql-${PG_MAJOR}=${pgdg_version} \
+        postgresql-client-${PG_MAJOR}=${pgdg_version} \
+        postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
+        postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
+        postgresql-${PG_MAJOR}-wal2json
+
+    apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
+fi
 
 # clear apt cache
 rm -rf /var/lib/apt/lists/*

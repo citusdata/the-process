@@ -2,6 +2,11 @@
 DOCKER_REPO ?= ghcr.io/citusdata
 SHA_SUFFIX := $(shell git rev-parse --short HEAD)
 
+# Upstream postgres git ref used to source-build PG19 (which is unreleased
+# and therefore not available via apt.postgresql.org). Override at build
+# time, e.g. `make PG19_SOURCE_REF=master push-extbuilder-19devel`.
+PG19_SOURCE_REF ?= 43649b6a53e9b3964e921cc962f5c977bce688fd
+
 # auto generated variables
 ifdef RELEASE
 	TAG_SUFFIX := -v${SHA_SUFFIX}
@@ -16,8 +21,11 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 STYLE_CHECKER_TOOLS_VERSION=0.8.33
 
-# Upgrade tests for the PG major versions from PG_VERSIONS file
-CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+# Upgrade tests for the PG major versions from PG_VERSIONS file.
+# PG19 is excluded because no Citus release supports it yet; filter it
+# out by name so reordering PG_VERSIONS does not silently change which
+# major is dropped.
+CITUS_UPGRADE_PG_VERSIONS=$(shell grep -v '^PG19=' PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
 CITUS_UPGRADE_VERSIONS_16=v12.1.12
 # Latest minor version of Citus 13
@@ -43,6 +51,7 @@ build-extbuilder-$1:
 		-f extbuilder/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
+		--build-arg=PG19_SOURCE_REF=${PG19_SOURCE_REF} \
 		--tag=${DOCKER_REPO}/extbuilder:$3${TAG_SUFFIX}
 
 build-all:: build-extbuilder-$1
@@ -62,6 +71,7 @@ build-exttester-$1:
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--build-arg=PG_VERSION_CLEAN=$3 \
+		--build-arg=PG19_SOURCE_REF=${PG19_SOURCE_REF} \
 		--build-arg=CITUS_VERSION="$(call get_last_citus_version,$2)" \
 		--tag=${DOCKER_REPO}/exttester:$3${TAG_SUFFIX}
 
@@ -82,6 +92,7 @@ build-failtester-$1:
 		-f failtester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
+		--build-arg=PG19_SOURCE_REF=${PG19_SOURCE_REF} \
 		--tag=${DOCKER_REPO}/failtester:$3${TAG_SUFFIX}
 
 build-all:: build-failtester-$1
@@ -110,6 +121,7 @@ build-citusupgradetester-$1:
 		-f citusupgradetester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
+		--build-arg=PG19_SOURCE_REF=${PG19_SOURCE_REF} \
 		--build-arg=CITUS_VERSIONS="$(call get_citus_versions,$2)" \
 		--tag=${DOCKER_REPO}/citusupgradetester:$3${TAG_SUFFIX}
 
@@ -131,6 +143,7 @@ build-pgupgradetester:
 		pgupgradetester/ \
 		-f pgupgradetester/Dockerfile \
 		--build-arg=PG_VERSIONS="${PG_VERSIONS}" \
+		--build-arg=PG19_SOURCE_REF=${PG19_SOURCE_REF} \
 		--tag=${DOCKER_REPO}/pgupgradetester:${PG_UPGRADE_TESTER_VERSION}${TAG_SUFFIX}
 
 build-all:: build-pgupgradetester

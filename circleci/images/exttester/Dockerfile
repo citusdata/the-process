@@ -169,8 +169,12 @@ apt-get install -y --no-install-recommends --allow-downgrades \
     postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
-    postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json
+    postgresql-server-dev-${PG_MAJOR}=${pgdg_version}
+
+# wal2json is not always published for pre-release majors (e.g. PG19 beta), so
+# install it best-effort to avoid breaking the build before the package lands.
+apt-get install -y --no-install-recommends postgresql-${PG_MAJOR}-wal2json \
+    || echo "WARNING: postgresql-${PG_MAJOR}-wal2json not available for PG${PG_MAJOR}, continuing without it"
 
 apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
 

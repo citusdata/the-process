@@ -33,7 +33,7 @@ markupsafe==3.0.3; python_version >= '3.9'
 mitmproxy @ git+https://github.com/citusdata/mitmproxy.git@df5879516a57ea780e1cc88edaf2051e1d32915f
 mitmproxy-linux==0.12.9; python_version >= '3.12'
 mitmproxy-rs==0.12.9; python_version >= '3.12'
-msgpack==1.1.2; python_version >= '3.9'
+msgpack==1.2.1; python_version >= '3.9'
 packaging==26.2; python_version >= '3.8'
 pluggy==1.6.0; python_version >= '3.9'
 psycopg==3.3.4; python_version >= '3.10'

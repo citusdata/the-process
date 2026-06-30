@@ -8,6 +8,11 @@ RUN <<'EOF'
 # install dependencies
 set -eux
 
+# uncrustify 0.68.1 declares a pre-3.5 cmake_minimum_required, but CMake 4.x
+# (now shipped by the moving alpine:latest base) removed compatibility with
+# CMake < 3.5. Allow the legacy minimum so the source build still configures.
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 apk add --no-cache --virtual installdeps \
       curl \
       make \

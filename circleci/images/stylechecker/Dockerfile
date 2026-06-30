@@ -1,5 +1,10 @@
 # we cannot easily upgrade to python 3.11 as our mitmproxy fork does not ship with it
-FROM alpine:latest
+# Pin the base to alpine 3.22 (the release that was `latest` when this image last
+# built green, 2025): newer alpine ships cmake 4.x (removed <3.5 policy compat) and
+# gcc 15 (rejects uncrustify 0.68.1's enum_flags.h template with -Wtemplate-body),
+# both of which break the legacy uncrustify 0.68.1 source build below. alpine 3.22
+# ships gcc 14 + cmake 3.29, the proven-good toolchain for uncrustify 0.68.1.
+FROM alpine:3.22
 ARG TOOLS_VERSION
 
 COPY ./files/etc/requirements.txt /tmp/etc/
@@ -7,11 +12,6 @@ COPY ./files/etc/requirements.txt /tmp/etc/
 RUN <<'EOF'
 # install dependencies
 set -eux
-
-# uncrustify 0.68.1 declares a pre-3.5 cmake_minimum_required, but CMake 4.x
-# (now shipped by the moving alpine:latest base) removed compatibility with
-# CMake < 3.5. Allow the legacy minimum so the source build still configures.
-export CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 apk add --no-cache --virtual installdeps \
       curl \

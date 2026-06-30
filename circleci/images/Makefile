@@ -23,7 +23,7 @@ CITUS_UPGRADE_VERSIONS_15=v12.1.11
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
 CITUS_UPGRADE_VERSIONS_16=v12.1.11
 # Latest minor version of Citus 13
-CITUS_UPGRADE_VERSIONS_17=v13.2.2
+CITUS_UPGRADE_VERSIONS_17=v13.3.0
 
 # Function to get Citus versions for a specific PG major version
 get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))

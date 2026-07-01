@@ -20,7 +20,7 @@ jobs:
       pgversions: ${{ toJSON(steps.get_versions.outputs.*) }}
 
   build_dev_images_per_postgres:
-    if: github.ref_name != 'master'
+    if: github.ref_name != 'master' && !startsWith(github.ref_name, 'release-')
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
     permissions:
@@ -57,7 +57,7 @@ jobs:
           fi
 
   build_dev_images_shared:
-    if: github.ref_name != 'master'
+    if: github.ref_name != 'master' && !startsWith(github.ref_name, 'release-')
     name: push-test-images-for-dev
     runs-on: ubuntu-latest
     permissions:
@@ -92,7 +92,7 @@ jobs:
 
 
   build_release_images:
-    if: github.ref_name == 'master'
+    if: github.ref_name == 'master' || startsWith(github.ref_name, 'release-')
     needs: prepare_pgversion_matrix
     name: push-test-images-for-release
     runs-on: ubuntu-latest
@@ -109,7 +109,7 @@ jobs:
     steps: *build_images_per_pg_steps
 
   build_release_images_shared:
-    if: github.ref_name == 'master'
+    if: github.ref_name == 'master' || startsWith(github.ref_name, 'release-')
     name: push-shared-images-for-release
     runs-on: ubuntu-latest
     permissions:

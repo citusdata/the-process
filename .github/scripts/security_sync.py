@@ -140,6 +140,57 @@ def lock_version(lockfile_path, package):
     return None
 
 
+def lock_keep_resolvable(pipfile_path, pristine_text, targets, order):
+    """Lock pipfile_path, keeping as many security bumps as pipenv can resolve.
+
+    Fast path: apply every bump and lock once (the common, all-resolvable case --
+    same cost as before). If that lock fails, confirm the un-bumped baseline still
+    resolves (otherwise the failure is environmental -- re-raise so the run fails
+    loudly), then re-add the bumps one at a time and drop any single bump that
+    makes the tree unresolvable (e.g. a transitive cap that excludes the patched
+    range). This stops one genuinely unfixable alert from poisoning the whole
+    batch. On return pipfile_path holds exactly the kept subset with a matching
+    Pipfile.lock; an all-dropped tree is restored to its committed lock (no churn).
+    Returns the set of dropped ("blocked") packages.
+    """
+    lockfile = pipfile_path.with_name("Pipfile.lock")
+    pristine_lock = lockfile.read_text() if lockfile.exists() else None
+
+    def apply(subset):
+        pipfile_path.write_text(pristine_text)
+        for pkg in subset:
+            update_pipfile(pipfile_path, pkg, targets[pkg]["patched"],
+                           alert_section(targets[pkg]["scope"]))
+
+    def lock():
+        run(["pipenv", "lock"], cwd=pipfile_path.parent)
+
+    apply(order)
+    try:
+        lock()
+        return set()
+    except subprocess.CalledProcessError:
+        pass
+
+    apply([])
+    lock()  # baseline must resolve; a failure here is environmental -> re-raise
+    kept, dropped = [], set()
+    for pkg in order:
+        apply(kept + [pkg])
+        try:
+            lock()
+            kept.append(pkg)
+        except subprocess.CalledProcessError:
+            dropped.add(pkg)
+    if not kept:
+        apply([])
+        if pristine_lock is not None:
+            lockfile.write_text(pristine_lock)  # nothing resolved -> no lock churn
+    elif dropped:
+        apply(kept)  # strip the last failed trial's bump; lock already matches kept
+    return dropped
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alerts", required=True)
@@ -183,35 +234,43 @@ def main():
     pre_versions = {pkg: [lock_version(lp, pkg) for lp in lock_paths]
                     for pkg in targets}
 
-    for pkg, info in targets.items():
-        section = alert_section(info["scope"])
-        for pf in pipfile_paths:
-            update_pipfile(pf, pkg, info["patched"], section)
+    # Snapshot the pristine Pipfile so the resolver can re-derive any subset of
+    # the bumps from a clean baseline.
+    pristine = {pf: pf.read_text() for pf in pipfile_paths}
+    order = list(targets)
 
-    # Lock each regress tree. The two trees are usually byte-identical, so an
-    # identical post-edit Pipfile is locked once and its resolved lock copied to
-    # the twin rather than re-running the slow, network-bound resolver. A lock
-    # failure (e.g. an unresolvable constraint such as a transitive cap blocking
-    # the patched range) is not a crash: record it so the affected targets are
-    # classified as not-fixed and the run fails loudly with a clean verdict.
-    lock_failed = []
-    locked = {}  # post-edit Pipfile hash -> its Pipfile.lock path, or None if the lock failed
+    # Lock each regress tree, keeping as many bumps as pipenv can resolve. The two
+    # trees are usually byte-identical, so an identical baseline is resolved once
+    # and its Pipfile + lock copied to the twin rather than re-running the slow,
+    # network-bound resolver. A bump pipenv cannot resolve (e.g. a transitive cap
+    # excluding the patched range) is dropped and marked "blocked" -- it does not
+    # poison the rest of the batch. A baseline that will not resolve at all is an
+    # environment failure: it raises and is recorded as a hard lock failure.
+    blocked = {}      # lockfile path -> set of packages dropped to make it resolve
+    lock_failed = []  # lockfile paths whose baseline would not resolve
+    resolved = {}     # pristine Pipfile hash -> (Pipfile, Pipfile.lock, dropped) or None
     for pf, lp in zip(pipfile_paths, lock_paths):
-        digest = hashlib.sha256(pf.read_bytes()).hexdigest()
-        if digest in locked:
-            twin = locked[digest]
-            if twin is None:
-                lock_failed.append(lp)        # same input already failed to resolve
+        digest = hashlib.sha256(pristine[pf].encode()).hexdigest()
+        if digest in resolved:
+            prior = resolved[digest]
+            if prior is None:
+                lock_failed.append(lp)          # same baseline already failed
             else:
-                shutil.copyfile(twin, lp)     # identical input -> identical lock
+                src_pf, src_lp, dropped = prior
+                shutil.copyfile(src_pf, pf)     # identical baseline -> identical result
+                shutil.copyfile(src_lp, lp)
+                if dropped:
+                    blocked[lp] = dropped
             continue
         try:
-            run(["pipenv", "lock"], cwd=pf.parent)
-            locked[digest] = lp
+            dropped = lock_keep_resolvable(pf, pristine[pf], targets, order)
+            resolved[digest] = (pf, lp, dropped)
+            if dropped:
+                blocked[lp] = dropped
         except subprocess.CalledProcessError as exc:
             print(f"pipenv lock failed in {pf.parent}: {exc}", file=sys.stderr)
             lock_failed.append(lp)
-            locked[digest] = None
+            resolved[digest] = None
 
     # Evaluate post-state and classify each target.
     summary = []
@@ -222,6 +281,8 @@ def main():
         for lp, before, after in zip(lock_paths, pre_versions[pkg], post):
             if lp in lock_failed:
                 statuses.append("not-fixed")
+            elif pkg in blocked.get(lp, set()):
+                statuses.append("blocked")
             elif after is None:
                 statuses.append("absent")
             elif Version(after) >= Version(info["patched"]):
@@ -236,6 +297,8 @@ def main():
             overall = "addressed"
         elif all(s == "already-satisfied" for s in statuses):
             overall = "already-satisfied"
+        elif all(s in ("blocked", "already-satisfied") for s in statuses):
+            overall = "blocked"
         else:
             overall = "failed"
         summary.append({
@@ -247,16 +310,19 @@ def main():
 
     Path(args.summary_out).write_text(json.dumps({
         "addressed": addressed,
+        "blocked": [s["package"] for s in summary if s["overall"] == "blocked"],
         "details": summary,
     }, indent=2))
 
     for s in summary:
         print(f"{s['overall']:20s} {s['package']} -> {s['patched']} ({s['scope']})")
 
-    # Fail loudly only when a fixable alert could not be resolved (e.g. a blocked
-    # constraint or a failed lock). An all "already-satisfied" run, or a run that
-    # addressed everything, is a success: the workflow's own git-diff guard
-    # prevents an empty PR when nothing actually changed.
+    # Fail loudly only on a hard lock failure (bad environment) or an unexpected
+    # classification. Packages pipenv cannot resolve are "blocked", not "failed":
+    # they are reported but do not sink the run, so the resolvable subset still
+    # opens PRs. An all "already-satisfied" run, or one that addressed everything,
+    # is a success; the workflow's own git-diff guard prevents an empty PR when
+    # nothing actually changed.
     failed = [s["package"] for s in summary if s["overall"] == "failed"]
     if failed:
         sys.exit(

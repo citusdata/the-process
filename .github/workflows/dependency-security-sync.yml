@@ -184,6 +184,28 @@ jobs:
           fi
           echo "THE_PROCESS_PR=$pr_number" >> "$GITHUB_ENV"
 
+      - name: Point citus CI at the-process dev image
+        if: steps.sync.outputs.addressed != ''
+        run: |
+          # Synced requirements ship in the-process dev images tagged -dev-<sha>
+          # built when the automation branch is pushed. Point the citus PR at that
+          # image so its CI validates the new deps (skip if nothing was rebuilt).
+          if [ "$(git rev-list --count origin/master..HEAD)" -eq 0 ]; then
+            echo "No the-process commit; leaving citus image_suffix unchanged."
+            exit 0
+          fi
+          tp_sha=$(git rev-parse --short HEAD)
+          cd citus
+          source "$GITHUB_WORKSPACE/.github/scripts/safe_push.sh"
+          sed -i -E "s|(image_suffix:\s*)\"[^\"]*\"|\1\"-dev-${tp_sha}\"|" .github/workflows/build_and_test.yml
+          if git diff --quiet -- .github/workflows/build_and_test.yml; then
+            echo "citus image_suffix already -dev-${tp_sha}."
+          else
+            git add .github/workflows/build_and_test.yml
+            git commit -m "Point CI at the-process dev image for synced requirements"
+            safe_push automation/dependency-security-sync origin/main
+          fi
+
       - name: Summary
         if: steps.alerts.outputs.count != '0'
         run: |

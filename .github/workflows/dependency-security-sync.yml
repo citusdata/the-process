@@ -120,11 +120,11 @@ jobs:
         run: |
           cd citus/src/test/regress
           base=$(pipenv requirements)
-          dev=$(pipenv requirements --dev)
+          dev=$(pipenv requirements --dev-only)
           cd "$GITHUB_WORKSPACE"
           ref="citusdata/citus#${CITUS_PR}"
           base_header=$'# generated from Citus\'s Pipfile.lock (in src/test/regress) as of '"${ref}"$'\n# using `pipenv requirements > requirements.txt`, so as to avoid the\n# need for pipenv/pyenv in this image\n\n'
-          dev_header=$'# generated from Citus\'s Pipfile.lock (in src/test/regress) as of '"${ref}"$'\n# using `pipenv requirements --dev > requirements.txt`, so as to avoid the\n# need for pipenv/pyenv in this image\n\n'
+          dev_header=$'# generated from Citus\'s Pipfile.lock (in src/test/regress) as of '"${ref}"$'\n# using `pipenv requirements --dev-only > requirements.txt`, so as to avoid the\n# need for pipenv/pyenv in this image\n\n'
           for f in \
             circleci/images/citusupgradetester/files/etc/requirements.txt \
             circleci/images/failtester/files/etc/requirements.txt \

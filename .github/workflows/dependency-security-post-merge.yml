@@ -119,7 +119,7 @@ jobs:
           postfix="-v${short_sha}"
 
           cd citus
-          sed -i -E "s|(image_suffix:\s*)\"-v[0-9a-f]+\"|\1\"${postfix}\"|" .github/workflows/build_and_test.yml
+          sed -i -E "s#(image_suffix:\s*)\"-(v|dev-)[0-9a-f]+\"#\1\"${postfix}\"#" .github/workflows/build_and_test.yml
 
           if git diff --quiet -- .github/workflows/build_and_test.yml; then
             echo "No build_and_test.yml image_suffix change needed."

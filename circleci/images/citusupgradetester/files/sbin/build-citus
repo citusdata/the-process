@@ -50,8 +50,9 @@ build_ext() {
 
   cd "${installdir}" && find . -type f -print > "${builddir}/files.lst"
   tar cvf "${basedir}/install-pg${pg_major}-citus${citus_version}.tar" `cat ${builddir}/files.lst`
-
-  cd "${builddir}" && rm -rf install files.lst && make clean
+  find usr/lib/postgresql/${pg_major}/lib -type f -name '*.so' -printf '%P\n' > "${builddir}/so-files.lst"
+  tar cvf "${basedir}/so-pg${pg_major}-citus${citus_version}.tar" -C usr/lib/postgresql/${pg_major}/lib -T "${builddir}/so-files.lst"
+  cd "${builddir}" && rm -rf install files.lst so-files.lst && make clean
 }
 for citus_version in ${CITUS_VERSIONS}
 do 

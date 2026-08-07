@@ -1,0 +1,136 @@
+name: dependency-security-post-merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  notify-citus:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'automation/dependency-security-sync'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_KEY }}
+          owner: citusdata
+
+      - name: Export GitHub App token to environment
+        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
+      - name: Checkout the-process
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          path: the-process
+          token: ${{ steps.app-token.outputs.token }}
+
+      # Now that the consolidated requirements PR has actually merged, close the
+      # individual the-process Dependabot PRs it superseded. The set of packages
+      # is read from the marker the sync workflow embedded in this PR's body, and
+      # matched exactly against each Dependabot PR title (no substring matches).
+      - name: Close superseded the-process Dependabot PRs
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          THIS_PR: ${{ github.event.pull_request.number }}
+        run: |
+          addressed=$(printf '%s\n' "$PR_BODY" \
+            | grep -oE '<!-- addressed:[^>]*-->' | head -n1 \
+            | sed -E 's/<!-- addressed:[[:space:]]*//; s/[[:space:]]*-->//')
+          if [ -z "$addressed" ]; then
+            echo "No addressed-package marker found in PR body; nothing to close."
+            exit 0
+          fi
+          echo "Addressed packages: $addressed"
+          for pkg in $addressed; do
+            pkg_lc=$(printf '%s' "$pkg" | tr '[:upper:]' '[:lower:]')
+            nums=$(gh pr list --repo citusdata/the-process --state open \
+              --author "app/dependabot" --json number,title \
+              | jq -r --arg p "$pkg_lc" \
+                '.[] | select((.title|ascii_downcase|split(" ")) as $w | $w[0]=="bump" and $w[1]==$p) | .number')
+            for n in $nums; do
+              gh pr close "$n" --repo citusdata/the-process \
+                --comment "Closing in favor of consolidated automated requirements sync PR #${THIS_PR} (addresses ${pkg})."
+            done
+          done
+
+      - name: Resolve open citus sync PR
+        id: resolve
+        run: |
+          citus_pr=$(gh pr list --repo citusdata/citus \
+            --head automation/dependency-security-sync --state open \
+            --json number --jq '.[0].number // empty')
+          if [ -z "$citus_pr" ]; then
+            echo "No open citus sync PR found; nothing to update."
+          fi
+          echo "citus_pr=$citus_pr" >> "$GITHUB_OUTPUT"
+
+      # Don't point citus at an image tag that hasn't been pushed yet: wait for
+      # the the-process build-test-images run for the merge commit to finish
+      # before computing/committing the new image_suffix.
+      - name: Wait for the-process image build
+        if: steps.resolve.outputs.citus_pr != ''
+        env:
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          run_id=""
+          for _ in $(seq 1 30); do
+            run_id=$(gh run list --repo citusdata/the-process \
+              --workflow build-test-images.yml --json databaseId,headSha \
+              --jq "map(select(.headSha==\"$MERGE_SHA\")) | .[0].databaseId // empty")
+            [ -n "$run_id" ] && break
+            echo "Waiting for build-test-images run for ${MERGE_SHA}..."
+            sleep 20
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::No build-test-images run found for ${MERGE_SHA}; refusing to bump image_suffix."
+            exit 1
+          fi
+          gh run watch "$run_id" --repo citusdata/the-process --exit-status
+
+      - name: Checkout citus sync branch
+        if: steps.resolve.outputs.citus_pr != ''
+        uses: actions/checkout@v4
+        with:
+          repository: citusdata/citus
+          ref: automation/dependency-security-sync
+          token: ${{ steps.app-token.outputs.token }}
+          path: citus
+
+      - name: Update citus image_suffix with merged the-process SHA
+        if: steps.resolve.outputs.citus_pr != ''
+        env:
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          CITUS_PR: ${{ steps.resolve.outputs.citus_pr }}
+        run: |
+          # Derive the abbreviation exactly as circleci/images/Makefile does
+          # (git rev-parse --short), rather than blindly taking 7 chars, so the
+          # suffix always matches the tag the image was actually pushed with.
+          short_sha=$(git -C the-process rev-parse --short "$MERGE_SHA")
+          postfix="-v${short_sha}"
+
+          cd citus
+          sed -i -E "s#(image_suffix:\s*)\"-(v|dev-)[0-9a-f]+\"#\1\"${postfix}\"#" .github/workflows/build_and_test.yml
+
+          if git diff --quiet -- .github/workflows/build_and_test.yml; then
+            echo "No build_and_test.yml image_suffix change needed."
+            gh pr comment "$CITUS_PR" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}. image_suffix already matches ${postfix}."
+            exit 0
+          fi
+
+          git config user.name "packagingApp[bot]"
+          git config user.email "packagingApp[bot]@users.noreply.github.com"
+          git add .github/workflows/build_and_test.yml
+          git commit -m "Update image_suffix from merged the-process commit"
+          git push origin automation/dependency-security-sync
+
+          gh pr comment "$CITUS_PR" --repo citusdata/citus --body "the-process sync merged at ${MERGE_SHA}; updated build_and_test.yml image_suffix to ${postfix}."

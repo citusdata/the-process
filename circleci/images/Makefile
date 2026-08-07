@@ -1,5 +1,5 @@
 # config variable
-DOCKER_REPO ?= citus
+DOCKER_REPO ?= ghcr.io/citusdata
 SHA_SUFFIX := $(shell git rev-parse --short HEAD)
 
 # auto generated variables
@@ -10,20 +10,32 @@ else
 endif
 
 # all postgres versions we test against
-PG_VERSIONS=13.4 14.0
+PG_VERSIONS=$(shell cat PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
 
-PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-')
+PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
+STYLE_CHECKER_TOOLS_VERSION=0.8.33
 
-# we should add more majors/citus versions when we address https://github.com/citusdata/citus/issues/4807
-CITUS_UPGRADE_PG_VERSIONS=13.4
-CITUS_UPGRADE_VERSIONS=v9.5.0 v10.1.0
+# Upgrade tests for the PG major versions from PG_VERSIONS file
+CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+# Latest minor version of Citus 12
+CITUS_UPGRADE_VERSIONS_16=v12.1.14
+# Latest minor version of Citus 13
+CITUS_UPGRADE_VERSIONS_17=v13.4.0
+# Latest minor version of Citus 14
+CITUS_UPGRADE_VERSIONS_18=v14.2.0
+
+# Function to get Citus versions for a specific PG major version
+get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
+
+# Function to get the last Citus version for a specific PG major version
+get_last_citus_version = $(lastword $(CITUS_UPGRADE_VERSIONS_$(1)))
 
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-extbuilder-$1:
 	docker build \
@@ -45,12 +57,12 @@ push-all:: push-extbuilder-$1
 push-extbuilder-all:: push-extbuilder-$1
 
 build-exttester-$1:
-	docker build \
-		exttester/ \
+	docker build . \
 		-f exttester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
 		--build-arg=PG_VERSION_CLEAN=$3 \
+		--build-arg=CITUS_VERSION="$(call get_last_citus_version,$2)" \
 		--tag=${DOCKER_REPO}/exttester:$3${TAG_SUFFIX}
 
 build-all:: build-exttester-$1
@@ -87,10 +99,10 @@ endef
 # call make-image-targets($PG_VERSION, $PG_MAJOR) for every version in PG_VERSIONS
 $(foreach element,$(PG_VERSIONS),$(eval $(call make-image-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
-define make-citus-upgrage-targets
+define make-citus-upgrade-targets
 # $1 = PG_VERSION
 # $2 = PG_MAJOR
-# $3 = PG_VERION_CLEAN
+# $3 = PG_VERSION_CLEAN
 
 build-citusupgradetester-$1:
 	docker build \
@@ -98,7 +110,7 @@ build-citusupgradetester-$1:
 		-f citusupgradetester/Dockerfile \
 		--build-arg=PG_VERSION=$1 \
 		--build-arg=PG_MAJOR=$2 \
-		--build-arg=CITUS_VERSIONS="${CITUS_UPGRADE_VERSIONS}"\
+		--build-arg=CITUS_VERSIONS="$(call get_citus_versions,$2)" \
 		--tag=${DOCKER_REPO}/citusupgradetester:$3${TAG_SUFFIX}
 
 build-all:: build-citusupgradetester-$1
@@ -110,7 +122,7 @@ push-citusupgradetester-$1: build-citusupgradetester-$1
 push-all:: push-citusupgradetester-$1
 push-citusupgradetester-all:: push-citusupgradetester-$1
 endef
-$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrage-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
+$(foreach element,$(CITUS_UPGRADE_PG_VERSIONS),$(eval $(call make-citus-upgrade-targets,$(element),$(shell echo $(element) | awk -F'[^0-9]*' '/[0-9]/ { print $$1 }'),$(shell echo $(element) | sed 's/~//'))))
 
 
 # pg upgrade image is 1 global image
@@ -128,3 +140,17 @@ push-pgupgradetester-all: build-pgupgradetester
 
 push-all:: push-pgupgradetester-all
 
+# style checker image is 1 global image
+build-stylechecker:
+	docker build \
+		stylechecker/ \
+		-f stylechecker/Dockerfile \
+		--build-arg=TOOLS_VERSION="${STYLE_CHECKER_TOOLS_VERSION}" \
+		--tag=${DOCKER_REPO}/stylechecker:${STYLE_CHECKER_TOOLS_VERSION}${TAG_SUFFIX}
+
+build-all:: build-stylechecker
+
+push-stylechecker-all: build-stylechecker
+	docker push ${DOCKER_REPO}/stylechecker:${STYLE_CHECKER_TOOLS_VERSION}${TAG_SUFFIX}
+
+push-all:: push-stylechecker-all

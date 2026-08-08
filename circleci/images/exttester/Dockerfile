@@ -143,6 +143,7 @@ RUN locale-gen
 ARG PG_VERSION
 ARG PG_MAJOR
 ARG CITUS_VERSION
+ARG WAL2JSON_REVISION=79d516e60463be3093ff927ba72cf6354bde09af
 ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 ENV CITUS_VERSION=$CITUS_VERSION
@@ -171,10 +172,16 @@ apt-get install -y --no-install-recommends --allow-downgrades \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
     postgresql-server-dev-${PG_MAJOR}=${pgdg_version}
 
-# wal2json is not always published for pre-release majors (e.g. PG19 beta), so
-# install it best-effort to avoid breaking the build before the package lands.
-apt-get install -y --no-install-recommends postgresql-${PG_MAJOR}-wal2json \
-    || echo "WARNING: postgresql-${PG_MAJOR}-wal2json not available for PG${PG_MAJOR}, continuing without it"
+if [ "${PG_MAJOR}" = "19" ]; then
+    curl -fsSL "https://github.com/eulerto/wal2json/archive/${WAL2JSON_REVISION}.tar.gz" | tar xz -C /tmp
+    make -C "/tmp/wal2json-${WAL2JSON_REVISION}" \
+        PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config" -j"$(nproc)"
+    make -C "/tmp/wal2json-${WAL2JSON_REVISION}" \
+        PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config" install
+    rm -rf "/tmp/wal2json-${WAL2JSON_REVISION}"
+else
+    apt-get install -y --no-install-recommends postgresql-${PG_MAJOR}-wal2json
+fi
 
 apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
 

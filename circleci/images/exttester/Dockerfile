@@ -143,6 +143,7 @@ RUN locale-gen
 ARG PG_VERSION
 ARG PG_MAJOR
 ARG CITUS_VERSION
+ARG WAL2JSON_REVISION=79d516e60463be3093ff927ba72cf6354bde09af
 ENV PG_VERSION=$PG_VERSION
 ENV PG_MAJOR=$PG_MAJOR
 ENV CITUS_VERSION=$CITUS_VERSION
@@ -153,7 +154,8 @@ set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+# The "19" component carries the PG19 beta packages, which are not in "main" yet.
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main 19" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update
@@ -168,8 +170,18 @@ apt-get install -y --no-install-recommends --allow-downgrades \
     postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \
-    postgresql-server-dev-${PG_MAJOR}=${pgdg_version} \
-    postgresql-${PG_MAJOR}-wal2json
+    postgresql-server-dev-${PG_MAJOR}=${pgdg_version}
+
+if [ "${PG_MAJOR}" = "19" ]; then
+    curl -fsSL "https://github.com/eulerto/wal2json/archive/${WAL2JSON_REVISION}.tar.gz" | tar xz -C /tmp
+    make -C "/tmp/wal2json-${WAL2JSON_REVISION}" \
+        PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config" -j"$(nproc)"
+    make -C "/tmp/wal2json-${WAL2JSON_REVISION}" \
+        PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config" install
+    rm -rf "/tmp/wal2json-${WAL2JSON_REVISION}"
+else
+    apt-get install -y --no-install-recommends postgresql-${PG_MAJOR}-wal2json
+fi
 
 apt-get install -y --no-install-recommends -t bookworm libdbd-pg-perl
 

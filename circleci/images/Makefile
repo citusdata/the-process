@@ -16,8 +16,11 @@ PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
 STYLE_CHECKER_TOOLS_VERSION=0.8.33
 
-# Upgrade tests for the PG major versions from PG_VERSIONS file
-CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
+# Upgrade tests for the PG major versions from PG_VERSIONS file.
+# PG19 is excluded because no Citus release supports it yet; filter it
+# out by name so reordering PG_VERSIONS does not silently change which
+# major is dropped.
+CITUS_UPGRADE_PG_VERSIONS=$(shell grep -v '^PG19=' PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # Latest minor version of Citus 13
 CITUS_UPGRADE_VERSIONS_17=v13.4.0
 # Latest minor version of Citus 14

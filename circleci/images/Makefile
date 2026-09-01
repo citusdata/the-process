@@ -21,8 +21,6 @@ STYLE_CHECKER_TOOLS_VERSION=0.8.33
 # out by name so reordering PG_VERSIONS does not silently change which
 # major is dropped.
 CITUS_UPGRADE_PG_VERSIONS=$(shell grep -v '^PG19=' PG_VERSIONS|cut -c 6-|tr '\n' ' ')
-# Latest minor version of Citus 12
-CITUS_UPGRADE_VERSIONS_16=v12.1.14
 # Latest minor version of Citus 13
 CITUS_UPGRADE_VERSIONS_17=v13.4.0
 # Latest minor version of Citus 14

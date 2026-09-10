@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 2 * * 0'
   workflow_dispatch:
+    inputs:
+      citus_ref:
+        description: Citus branch, tag, or commit to sync
+        required: false
+        default: main
+        type: string
 
 concurrency:
   group: dependency-security-sync
@@ -40,6 +46,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: citusdata/citus
+          ref: ${{ inputs.citus_ref || 'main' }}
           path: citus
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
@@ -70,6 +77,9 @@ jobs:
         if: steps.alerts.outputs.count != '0'
         id: sync
         run: |
+          # Source history is not a manual edit to the bot-managed branches.
+          echo "CITUS_BASE_SHA=$(git -C citus rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "THE_PROCESS_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           python -m pip install --quiet packaging
           python .github/scripts/security_sync.py \
             --alerts alerts.json \
@@ -98,7 +108,7 @@ jobs:
             echo "No citus dependency changes to commit."
           else
             git commit -m "Automate Dependabot alert security dependency sync"
-            safe_push automation/dependency-security-sync origin/main
+            safe_push automation/dependency-security-sync "$CITUS_BASE_SHA"
           fi
 
           pr_number=$(gh pr list --repo citusdata/citus --head automation/dependency-security-sync --state open --json number --jq '.[0].number // empty')
@@ -160,7 +170,7 @@ jobs:
             echo "No the-process dependency changes to commit."
           else
             git commit -m "Automate security requirements sync from citus alerts"
-            safe_push automation/dependency-security-sync origin/master
+            safe_push automation/dependency-security-sync "$THE_PROCESS_BASE_SHA"
           fi
 
           # The machine-readable marker is consumed by the post-merge workflow to
@@ -203,7 +213,7 @@ jobs:
           else
             git add .github/workflows/build_and_test.yml
             git commit -m "Point CI at the-process dev image for synced requirements"
-            safe_push automation/dependency-security-sync origin/main
+            safe_push automation/dependency-security-sync "$CITUS_BASE_SHA"
           fi
 
       - name: Summary

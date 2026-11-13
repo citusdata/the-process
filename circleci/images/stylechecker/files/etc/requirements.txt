@@ -1,10 +1,10 @@
-# generated from Citus's Pipfile.lock (in src/test/regress) as of citusdata/citus#8547
-# using `pipenv requirements --dev-only > requirements.txt`, so as to avoid the
-# need for pipenv/pyenv in this image
+# generated from Citus Pipfile.lock (src/test/regress) at citusdata/citus@d4f1fd221ac185a174ebdd72860ce9ce6f6df4db
+# using pipenv 2025.0.3: pipenv requirements --dev-only
+# to avoid requiring pipenv/pyenv in this image
 
 -i https://pypi.python.org/simple
 attrs==26.1.0; python_version >= '3.9'
-black==26.3.1; python_version >= '3.10'
+black==26.10.1; python_version >= '3.10'
 click==8.3.2; python_version >= '3.10'
 flake8==7.3.0; python_version >= '3.9'
 flake8-bugbear==25.11.29; python_version >= '3.10'

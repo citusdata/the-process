@@ -55,7 +55,8 @@ set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+# The major-specific component provides libpq matching the server version.
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main ${PG_MAJOR}" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update

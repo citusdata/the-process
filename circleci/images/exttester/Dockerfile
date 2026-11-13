@@ -153,7 +153,7 @@ set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main ${PG_MAJOR}" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update
@@ -163,8 +163,8 @@ pgdg_version=$(apt list -a postgresql-server-dev-${PG_MAJOR} 2>/dev/null | grep 
 
 apt-get install -y --no-install-recommends --allow-downgrades \
     libdbi-perl \
-    libpq-dev \
-    libpq5 \
+    libpq-dev=${pgdg_version} \
+    libpq5=${pgdg_version} \
     postgresql-${PG_MAJOR}=${pgdg_version} \
     postgresql-client-${PG_MAJOR}=${pgdg_version} \
     postgresql-${PG_MAJOR}-dbgsym=${pgdg_version} \

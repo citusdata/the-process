@@ -59,7 +59,11 @@ set -eux
 
 # install key and repositories
 curl -sf https://www.postgresql.org/media/keys/ACCC4CF8.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -
-echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" >> /etc/apt/sources.list.d/postgresql.list
+PG_MAJORS=()
+for PG_VERSION in $PG_VERSIONS; do
+    PG_MAJORS+=("${PG_VERSION%%.*}")
+done
+echo "deb https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main ${PG_MAJORS[*]}" >> /etc/apt/sources.list.d/postgresql.list
 echo "deb https://apt-archive.postgresql.org/pub/repos/apt bookworm-pgdg-archive main" >> /etc/apt/sources.list.d/postgresql.list
 
 apt-get update
@@ -72,10 +76,11 @@ for PG_VERSION in $PG_VERSIONS; do
     pkgs+=("postgresql-client-${PG_MAJOR}=${pgdg_version}")
     pkgs+=("postgresql-${PG_MAJOR}-dbgsym=${pgdg_version}")
     pkgs+=("postgresql-server-dev-${PG_MAJOR}=${pgdg_version}")
+    last_pgdg_version=$pgdg_version;
 done;
 
-pkgs+=("libpq-dev");
-pkgs+=("libpq5");
+pkgs+=("libpq-dev=${last_pgdg_version}");
+pkgs+=("libpq5=${last_pgdg_version}");
 
 echo ${pkgs[@]}
 

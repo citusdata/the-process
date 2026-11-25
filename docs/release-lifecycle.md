@@ -26,7 +26,7 @@ A weekly drift check in `citusdata/citus` inspects the outputs of Flows 1, 2, an
 
 - **Docker:** Publish Docker Hub updates only on `X.Y.0` of the active Docker release line, unless explicitly forced for a catch-up or security rebuild. Policy lives in `citusdata/docker`.
 - **PGXN:** Publish stable Citus releases only, strictly forward-only. Never publish a backport from an older minor/major line over a newer PGXN version, and never publish pre-releases.
-- **Package channels:** `community` carries GA packages; `community-nightly` carries nightly builds.
+- **Package channels:** `community` carries GA packages; `community-nightlies` carries nightly builds.
 - **packagecloud:** Primary GA distribution channel, published from `citusdata/packaging` (`all-citus`) after the pre-GA container install test passes.
 - **PMC (packages.microsoft.com):** Deferred pending external Microsoft team decisions on package signing, ownership, and repository mapping.
 

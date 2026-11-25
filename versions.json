@@ -1,0 +1,16 @@
+{
+  "line": "release-14",
+  "postgres_ci": {
+    "16": "16.16",
+    "17": "17.12",
+    "18": "18.7"
+  },
+  "default_pg_major": "18",
+  "upgrade_test_pg": ["16", "17", "18"],
+  "upgrade_from": {
+    "16": ["v12.1.12"],
+    "17": ["v13.2.2"],
+    "18": ["v14.2.0"]
+  },
+  "style_checker_tools_version": "0.8.33"
+}

@@ -7,22 +7,31 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_name != 'master' && !startsWith(github.ref_name, 'release-') }}
+
 jobs:
   prepare_pgversion_matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      # Need the repo checked out in order to read the file
+      # Need the repo checked out in order to read versions.json
       - uses: actions/checkout@v5
       - id: get_versions
-        run: cat circleci/images/PG_VERSIONS >> $GITHUB_OUTPUT
+        run: |
+          pgversions=$(jq -ec '.postgres_ci | to_entries | sort_by(.key | tonumber) | map(.value)' versions.json)
+          line=$(jq -er '.line' versions.json)
+          echo "pgversions=${pgversions}" >> "$GITHUB_OUTPUT"
+          echo "line=${line}" >> "$GITHUB_OUTPUT"
     outputs:
-      # Will look like '["13.9", "14.6", "15.1"]'
-      pgversions: ${{ toJSON(steps.get_versions.outputs.*) }}
+      # Will look like '["16.16","17.12","18.7"]'
+      pgversions: ${{ steps.get_versions.outputs.pgversions }}
+      line: ${{ steps.get_versions.outputs.line }}
 
   build_dev_images_per_postgres:
     if: github.ref_name != 'master' && !startsWith(github.ref_name, 'release-')
     name: push-test-images-for-dev
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     needs:
@@ -59,7 +68,7 @@ jobs:
   build_dev_images_shared:
     if: github.ref_name != 'master' && !startsWith(github.ref_name, 'release-')
     name: push-test-images-for-dev
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     env:
@@ -95,7 +104,7 @@ jobs:
     if: github.ref_name == 'master' || startsWith(github.ref_name, 'release-')
     needs: prepare_pgversion_matrix
     name: push-test-images-for-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     env:
@@ -111,7 +120,7 @@ jobs:
   build_release_images_shared:
     if: github.ref_name == 'master' || startsWith(github.ref_name, 'release-')
     name: push-shared-images-for-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     env:
@@ -121,3 +130,48 @@ jobs:
       matrix:
         command: [citusupgradetester, pgupgradetester, stylechecker]
     steps: *build_shared_image_steps
+
+  notify_citus:
+    needs:
+      - prepare_pgversion_matrix
+      - build_release_images
+      - build_release_images_shared
+    if: github.repository == 'citusdata/the-process' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release-')) && needs.prepare_pgversion_matrix.outputs.line == github.ref_name
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_KEY }}
+          owner: citusdata
+          repositories: citus
+
+      - name: Dispatch citus-ci-images-ready to citus
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          line=$(jq -er '.line' versions.json)
+          if [ "$line" != "$REF_NAME" ]; then
+            echo "Skipping dispatch: versions.json line ($line) != ref ($REF_NAME)"
+            exit 0
+          fi
+          tag_suffix=$(RELEASE=1 make -C circleci/images -s print-tag-suffix)
+          if ! [[ "$tag_suffix" =~ ^-v[0-9a-f]{7,}$ ]]; then
+            echo "::error::Invalid tag_suffix from print-tag-suffix: '${tag_suffix}'"
+            exit 1
+          fi
+          jq -n \
+            --arg event_type "citus-ci-images-ready" \
+            --arg line "$line" \
+            --arg sha "$SHA" \
+            --arg tag_suffix "$tag_suffix" \
+            '{event_type: $event_type, client_payload: {line: $line, sha: $sha, tag_suffix: $tag_suffix}}' \
+            | gh api --method POST repos/citusdata/citus/dispatches --input -

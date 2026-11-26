@@ -1,6 +1,9 @@
 # config variable
 DOCKER_REPO ?= ghcr.io/citusdata
 SHA_SUFFIX := $(shell git rev-parse --short HEAD)
+ifeq ($(strip $(SHA_SUFFIX)),)
+$(error Failed to determine git short SHA)
+endif
 
 # auto generated variables
 ifdef RELEASE
@@ -9,28 +12,39 @@ else
 	TAG_SUFFIX := -dev-${SHA_SUFFIX}
 endif
 
+VERSIONS_FILE := ../../versions.json
+
 # all postgres versions we test against
-PG_VERSIONS=$(shell cat PG_VERSIONS|cut -c 6-|tr '\n' ' ' )
+PG_VERSIONS := $(shell jq -er '.postgres_ci | to_entries | sort_by(.key | tonumber) | map(.value | if (type == "string" and length > 0) then . else error("invalid postgres_ci version") end) | join(" ")' $(VERSIONS_FILE) || echo __JQ_ERR__)
+ifneq ($(filter __JQ_ERR__,$(PG_VERSIONS)),)
+$(error Failed to read postgres_ci from $(VERSIONS_FILE) (is jq installed?))
+endif
+ifeq ($(strip $(PG_VERSIONS)),)
+$(error Empty postgres_ci in $(VERSIONS_FILE))
+endif
 
-PG_UPGRADE_TESTER_VERSION=$(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
+PG_UPGRADE_TESTER_VERSION := $(shell echo ${PG_VERSIONS}|tr ' ' '-'|sed 's/~//g')
 
-STYLE_CHECKER_TOOLS_VERSION=0.8.33
+STYLE_CHECKER_TOOLS_VERSION := $(shell jq -er '.style_checker_tools_version | if (type == "string" and length > 0) then . else error("invalid style_checker_tools_version") end' $(VERSIONS_FILE) || echo __JQ_ERR__)
+ifneq ($(filter __JQ_ERR__,$(STYLE_CHECKER_TOOLS_VERSION)),)
+$(error Failed to read style_checker_tools_version from $(VERSIONS_FILE))
+endif
 
-# Upgrade tests for the PG major versions from PG_VERSIONS file.
-# PG19 is excluded because no Citus release supports it yet; filter it
-# out by name so reordering PG_VERSIONS does not silently change which
-# major is dropped.
-CITUS_UPGRADE_PG_VERSIONS=$(shell grep -v '^PG19=' PG_VERSIONS|cut -c 6-|tr '\n' ' ')
-# Latest minor version of Citus 13
-CITUS_UPGRADE_VERSIONS_17=v13.4.0
-# Latest minor version of Citus 14
-CITUS_UPGRADE_VERSIONS_18=v14.2.0
+# Upgrade tests for the PG major versions listed in upgrade_test_pg
+CITUS_UPGRADE_PG_VERSIONS := $(shell jq -er '. as $$v | (.upgrade_test_pg // []) | map($$v.postgres_ci[.] // error("unknown upgrade_test_pg major: " + .)) | join(" ")' $(VERSIONS_FILE) || echo __JQ_ERR__)
+ifneq ($(filter __JQ_ERR__,$(CITUS_UPGRADE_PG_VERSIONS)),)
+$(error Failed to resolve upgrade_test_pg from $(VERSIONS_FILE))
+endif
 
 # Function to get Citus versions for a specific PG major version
-get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
+get_citus_versions = $(shell jq -r --arg m "$(1)" '(.upgrade_from[$$m] // []) | join(" ")' $(VERSIONS_FILE))
 
 # Function to get the last Citus version for a specific PG major version
-get_last_citus_version = $(lastword $(CITUS_UPGRADE_VERSIONS_$(1)))
+get_last_citus_version = $(shell jq -r --arg m "$(1)" '(.upgrade_from[$$m] // []) | last // ""' $(VERSIONS_FILE))
+
+.PHONY: print-tag-suffix
+print-tag-suffix:
+	@echo "${TAG_SUFFIX}"
 
 # code below creates targets for all postgres versions in PG_VERSIONS
 define make-image-targets

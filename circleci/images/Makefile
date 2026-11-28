@@ -21,9 +21,9 @@ CITUS_UPGRADE_PG_VERSIONS=$(shell head PG_VERSIONS|cut -c 6-|tr '\n' ' ')
 # 12.1.10 is the latest release of Citus 12 when the test is expanded to cover Citus 12
 CITUS_UPGRADE_VERSIONS_16=v12.1.12
 # Latest minor version of Citus 13
-CITUS_UPGRADE_VERSIONS_17=v13.2.2
+CITUS_UPGRADE_VERSIONS_17=v13.2.2 v13.5.0
 # Latest minor version of Citus 14
-CITUS_UPGRADE_VERSIONS_18=v14.2.0
+CITUS_UPGRADE_VERSIONS_18=v14.2.0 v14.3.0
 
 # Function to get Citus versions for a specific PG major version
 get_citus_versions = $(CITUS_UPGRADE_VERSIONS_$(1))
